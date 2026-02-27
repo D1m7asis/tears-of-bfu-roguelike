@@ -12,6 +12,7 @@ var player: CharacterBody2D = null
 
 func _ready():
 	player = get_tree().get_first_node_in_group("player")
+	health = max_health
 
 func _physics_process(delta):
 	if player == null:
@@ -25,6 +26,12 @@ func _on_damage_area_body_entered(body):
 	if body.has_method("take_damage") and can_attack:
 		can_attack = false
 		body.take_damage(damage)
+		await get_tree().create_timer(attack_cooldown).timeout
+		can_attack = true
+		
+	if body.is_in_group("bullet"):
+		body.take_damage(1)  # Bullets deal 1 damage
+		body.queue_free()  # Remove the bullet
 		await get_tree().create_timer(attack_cooldown).timeout
 		can_attack = true
 
