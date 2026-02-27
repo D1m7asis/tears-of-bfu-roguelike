@@ -93,6 +93,7 @@ func shoot(dir: Vector2):
 	var bullet = bullet_scene.instantiate()
 	bullet.global_position = global_position + dir * bullet_spawn_offset
 	bullet.direction = dir
+	bullet.add_to_group("bullet")
 	get_tree().current_scene.add_child(bullet)
 
 	await get_tree().create_timer(fire_cooldown).timeout
