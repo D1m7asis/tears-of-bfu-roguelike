@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://bkbydtt5cobve"]
+
+[node name="Room_Test" type="Node2D" unique_id=833769610]
+
+[node name="Label" type="Label" parent="." unique_id=2096758991]
+offset_left = 495.0
+offset_top = 17.0
+offset_right = 593.0
+offset_bottom = 40.0
+text = "Tears of BFU"
+
+[node name="Floor" type="Sprite2D" parent="." unique_id=906205486]
+position = Vector2(777.9031, 347.24545)
+
+[node name="Walls" type="StaticBody2D" parent="." unique_id=218103083]
+position = Vector2(456, 362)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Walls" unique_id=1859386189]
+
+[node name="Decorations" type="Node2D" parent="." unique_id=1360770724]
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1174415980]
+position = Vector2(577, 325)

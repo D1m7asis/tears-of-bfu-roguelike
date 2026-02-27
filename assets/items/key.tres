@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ItemData" format=3 uid="uid://sssmhvho1726"]
+
+[ext_resource type="Script" uid="uid://ei4gbmaj8mi6" path="res://scripts/core/item_data.gd" id="1_42tpf"]
+
+[resource]
+script = ExtResource("1_42tpf")
+id = "key"
+stackable = false
+max_stack = 1
+metadata/_custom_type_script = "uid://ei4gbmaj8mi6"

@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://cxp532p1tm6ic"]
+
+[ext_resource type="Script" uid="uid://oct44r7ta01r" path="res://scenes/rooms/door.gd" id="1_inlty"]
+[ext_resource type="Texture2D" uid="uid://42qw0e75rrsg" path="res://assets/sprites/environment/door.png" id="2_e120i"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_lt0p6"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_inlty"]
+size = Vector2(40, 38)
+
+[node name="Door" type="StaticBody2D" unique_id=703260234]
+collision_layer = 8
+collision_mask = 2
+script = ExtResource("1_inlty")
+
+[node name="DoorBlocker" type="CollisionShape2D" parent="." unique_id=1264113337]
+scale = Vector2(3.76, 4.865)
+shape = SubResource("RectangleShape2D_lt0p6")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1713429018]
+scale = Vector2(0.28444445, 0.28444448)
+texture = ExtResource("2_e120i")
+
+[node name="Trigger" type="Area2D" parent="." unique_id=768391324]
+scale = Vector2(3.205, 3.205)
+collision_layer = 8
+collision_mask = 2
+
+[node name="TriggerShape" type="CollisionShape2D" parent="Trigger" unique_id=233178420]
+shape = SubResource("RectangleShape2D_inlty")
+
+[connection signal="body_entered" from="Trigger" to="." method="_on_trigger_body_entered"]

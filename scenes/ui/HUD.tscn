@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://dnlpoa076w31e"]
+
+[ext_resource type="Script" uid="uid://dp316kcuxsq3u" path="res://ui/hud.gd" id="1_kw0id"]
+
+[node name="HUD" type="CanvasLayer" unique_id=1571570090 groups=["hud"]]
+process_mode = 3
+script = ExtResource("1_kw0id")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1818982439]
+offset_right = 156.42
+offset_bottom = 113.0
+
+[node name="HealthLabel" type="Label" parent="VBoxContainer" unique_id=432697207]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
+text = "HP: 5"
+
+[node name="KeyLabel" type="Label" parent="VBoxContainer" unique_id=315145075]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
+text = "Keys: 1"
+
+[node name="HintLabel" type="Label" parent="VBoxContainer" unique_id=1538361181]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5729883, 0.5729883, 0.5729883, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+text = "Hint: 123 456"
+autowrap_mode = 2
