@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://dy46d8cefyrns"]
+
+[ext_resource type="PackedScene" uid="uid://223bpcrh4g7r" path="res://scenes/player/Player.tscn" id="1_qbsmt"]
+[ext_resource type="PackedScene" uid="uid://dnlpoa076w31e" path="res://scenes/ui/HUD.tscn" id="2_cpr0p"]
+[ext_resource type="Script" uid="uid://kse2a0kbrswd" path="res://scripts/core/room_manager.gd" id="3_cpr0p"]
+[ext_resource type="PackedScene" uid="uid://dwc2k6digm02y" path="res://scenes/rooms/Room_Base.tscn" id="4_78awf"]
+[ext_resource type="PackedScene" uid="uid://bw7acm0bsiroe" path="res://scenes/ui/RestartOverlay.tscn" id="5_s0nni"]
+
+[node name="Game" type="Node2D" unique_id=985981684]
+
+[node name="RoomRoot" type="Node2D" parent="." unique_id=1298829857]
+
+[node name="RoomManager" type="Node" parent="." unique_id=1428076604]
+script = ExtResource("3_cpr0p")
+room_templates = Array[PackedScene]([ExtResource("4_78awf")])
+
+[node name="Player" parent="." unique_id=1188411785 instance=ExtResource("1_qbsmt")]
+
+[node name="HUD" parent="Player" unique_id=1571570090 instance=ExtResource("2_cpr0p")]
+
+[node name="RestartOverlay" parent="Player" unique_id=960733918 groups=["restart_overlay"] instance=ExtResource("5_s0nni")]
+
+[node name="Camera2D" type="Camera2D" parent="Player" unique_id=512636328]

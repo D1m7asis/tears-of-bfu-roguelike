@@ -23,23 +23,19 @@ func _physics_process(delta):
 	move_and_slide()
 
 func _on_damage_area_body_entered(body):
-	if body.has_method("take_damage") and can_attack:
+	if body.has_method("take_damage") and can_attack and health > 0:
 		can_attack = false
 		body.take_damage(damage)
 		await get_tree().create_timer(attack_cooldown).timeout
 		can_attack = true
-		
-	if body.is_in_group("bullet"):
-		body.take_damage(1)  # Bullets deal 1 damage
-		body.queue_free()  # Remove the bullet
-		await get_tree().create_timer(attack_cooldown).timeout
-		can_attack = true
+
 
 func take_damage(amount: int):
-	health -= amount
-	modulate = Color(1, 0.5, 0.5)
-	await get_tree().create_timer(0.1).timeout
-	modulate = Color(1, 1, 1)
+	if health > 0:
+		health -= amount
+		modulate = Color(1, 0.5, 0.5)
+		await get_tree().create_timer(0.1).timeout
+		modulate = Color(1, 1, 1)
 	
 	if health < 0:
 		health = 0
@@ -52,3 +48,12 @@ func take_damage(amount: int):
 func die():
 	self.speed = 0
 	modulate = Color(0.388, 0.0, 0.137, 1.0)
+
+
+func _on_damage_area_area_entered(area: Area2D) -> void:
+	print("area is: ", area)
+	
+			
+	if area.is_in_group("bullet"):
+		take_damage(1)  # Enemy takes 1 damage from bullet
+		area.queue_free()  # Remove the bullet
