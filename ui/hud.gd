@@ -3,6 +3,8 @@ extends CanvasLayer
 @onready var health_label: Label = $VBoxContainer/HealthLabel
 @onready var key_label: Label = $VBoxContainer/KeyLabel
 @onready var hint_label: Label = $VBoxContainer/HintLabel
+@onready var bullet_time_bar: ProgressBar = $VBoxContainer/BulletTimeBar
+@onready var bullet_time_label: Label = $VBoxContainer/BulletTimeLabel
 @onready var minimap: Control = $Minimap
 @onready var pause_overlay: ColorRect = $PauseOverlay
 @onready var pause_panel: Panel = $PauseOverlay/PausePanel
@@ -17,7 +19,8 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	update_health(0)
 	update_keys(0)
-	set_hint("WASD move, Arrows shoot, Hold R restart, Esc pause")
+	update_bullet_time(0.0, 5.0, false)
+	set_hint("WASD move, Arrows shoot, Space bullet time, Hold R restart, Esc pause")
 	_resolve_background_music()
 	_sync_music_slider()
 	_set_pause_open(false)
@@ -36,6 +39,17 @@ func update_health(value: int) -> void:
 
 func update_keys(value: int) -> void:
 	key_label.text = "Keys: " + str(value)
+
+func update_bullet_time(current: float, max_value: float, active: bool) -> void:
+	if bullet_time_bar != null:
+		bullet_time_bar.max_value = max_value
+		bullet_time_bar.value = current
+	if bullet_time_label != null:
+		var seconds_text := str(snappedf(current, 0.1))
+		if active:
+			bullet_time_label.text = "Bullet Time: " + seconds_text + "s"
+		else:
+			bullet_time_label.text = "Focus: " + seconds_text + "s"
 
 func set_hint(text: String) -> void:
 	hint_label.text = text

@@ -24,24 +24,34 @@ var health: int = 0
 @export var victory_scene_path: String = "res://scenes/ui/Victory.tscn"
 @export var death_fade_duration: float = 0.5
 @export var death_hold_duration: float = 0.2
+@export var bullet_time_max_seconds: float = 5.0
+@export var bullet_time_kill_recharge_seconds: float = 1.0
 
 var door_lock_time: float = 0.0
 @export var door_lock_after_teleport: float = 0.25
 var is_dying: bool = false
 var is_room_transitioning: bool = false
 var room_transition_tween: Tween = null
+var bullet_time_charge: float = 0.0
+var is_bullet_time_active: bool = false
+var background_music = null
 
 func _ready() -> void:
 	add_to_group("player")
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
 	health = max_health
+	bullet_time_charge = bullet_time_max_seconds
 	restart_overlay = get_tree().get_first_node_in_group("restart_overlay")
 	hud = get_tree().get_first_node_in_group("hud")
+	background_music = get_tree().get_first_node_in_group("background_music")
 	_resolve_screen_fader()
 	_update_hud_all()
 
 func _physics_process(_delta: float) -> void:
+	if get_tree().paused:
+		velocity = Vector2.ZERO
+		return
 	if is_dying or is_room_transitioning:
 		velocity = Vector2.ZERO
 		return
@@ -66,11 +76,25 @@ func _physics_process(_delta: float) -> void:
 	move_and_slide()
 
 func _process(delta: float) -> void:
+	if get_tree().paused:
+		_set_bullet_time_active(false)
+		return
 	if is_dying or is_room_transitioning:
+		_set_bullet_time_active(false)
 		return
 
 	if door_lock_time > 0.0:
 		door_lock_time -= delta
+
+	if Input.is_action_pressed("bullet_time") and bullet_time_charge > 0.0:
+		_set_bullet_time_active(true)
+	else:
+		_set_bullet_time_active(false)
+
+	if is_bullet_time_active:
+		bullet_time_charge = maxf(0.0, bullet_time_charge - delta)
+		if bullet_time_charge <= 0.0:
+			_set_bullet_time_active(false)
 
 	if Input.is_action_just_pressed("shoot_right"):
 		shoot(Vector2.RIGHT)
@@ -94,6 +118,8 @@ func _process(delta: float) -> void:
 		if restart_overlay != null:
 			restart_overlay.set_visible_active(false)
 			restart_overlay.set_progress(0.0)
+
+	_update_hud_bullet_time()
 
 func shoot(dir: Vector2) -> void:
 	if is_dying or is_room_transitioning or not can_shoot:
@@ -201,6 +227,7 @@ func die() -> void:
 		return
 
 	is_dying = true
+	_set_bullet_time_active(false)
 	can_shoot = false
 	velocity = Vector2.ZERO
 	set_physics_process(false)
@@ -236,6 +263,7 @@ func _update_hud_keys() -> void:
 func _update_hud_all() -> void:
 	_update_hud_health()
 	_update_hud_keys()
+	_update_hud_bullet_time()
 
 func lock_doors() -> void:
 	door_lock_time = door_lock_after_teleport
@@ -245,6 +273,7 @@ func can_use_doors() -> bool:
 
 func begin_room_transition(exit_dir: int) -> void:
 	is_room_transitioning = true
+	_set_bullet_time_active(false)
 	velocity = Vector2.ZERO
 
 	if camera == null:
@@ -298,3 +327,24 @@ func _stop_room_transition_tween() -> void:
 	if room_transition_tween != null:
 		room_transition_tween.kill()
 		room_transition_tween = null
+
+func is_time_stopped() -> bool:
+	return is_bullet_time_active
+
+func on_enemy_killed() -> void:
+	bullet_time_charge = minf(bullet_time_max_seconds, bullet_time_charge + bullet_time_kill_recharge_seconds)
+	_update_hud_bullet_time()
+
+func _set_bullet_time_active(active: bool) -> void:
+	if is_bullet_time_active == active:
+		return
+	is_bullet_time_active = active
+	if background_music == null:
+		background_music = get_tree().get_first_node_in_group("background_music")
+	if background_music != null and background_music.has_method("set_bullet_time_audio"):
+		background_music.set_bullet_time_audio(active)
+	_update_hud_bullet_time()
+
+func _update_hud_bullet_time() -> void:
+	if hud != null and hud.has_method("update_bullet_time"):
+		hud.update_bullet_time(bullet_time_charge, bullet_time_max_seconds, is_bullet_time_active)

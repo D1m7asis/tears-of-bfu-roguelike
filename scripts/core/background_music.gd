@@ -6,15 +6,19 @@ extends AudioStreamPlayer
 const SUPPORTED_EXTENSIONS := ["mp3", "ogg", "wav"]
 const MIN_VOLUME_DB: float = -40.0
 const MAX_VOLUME_DB: float = 0.0
+const NORMAL_PITCH_SCALE: float = 1.0
+const BULLET_TIME_PITCH_SCALE: float = 0.88
 
 var _generator_playback: AudioStreamGeneratorPlayback = null
 var _tracks: Array[String] = []
 var _current_track_path: String = ""
 var _rng := RandomNumberGenerator.new()
+var _pitch_tween: Tween = null
 
 func _ready() -> void:
 	add_to_group("background_music")
 	set_music_volume_db(music_volume_db)
+	pitch_scale = NORMAL_PITCH_SCALE
 	finished.connect(_on_track_finished)
 	_rng.randomize()
 	_reload_tracks()
@@ -100,3 +104,16 @@ func set_music_volume_percent(percent: float) -> void:
 
 func get_music_volume_percent() -> float:
 	return inverse_lerp(MIN_VOLUME_DB, MAX_VOLUME_DB, music_volume_db) * 100.0
+
+func set_bullet_time_audio(active: bool) -> void:
+	var target_pitch := NORMAL_PITCH_SCALE
+	if active:
+		target_pitch = BULLET_TIME_PITCH_SCALE
+
+	if _pitch_tween != null:
+		_pitch_tween.kill()
+
+	_pitch_tween = create_tween()
+	_pitch_tween.set_trans(Tween.TRANS_SINE)
+	_pitch_tween.set_ease(Tween.EASE_OUT)
+	_pitch_tween.tween_property(self, "pitch_scale", target_pitch, 0.16)
