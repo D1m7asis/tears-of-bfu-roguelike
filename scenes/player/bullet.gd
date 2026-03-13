@@ -10,9 +10,10 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if _player == null:
 		_player = get_tree().get_first_node_in_group("player")
-	if _player != null and _player.has_method("is_time_stopped") and _player.is_time_stopped():
-		return
-	position += direction * speed * delta
+	var time_scale := 1.0
+	if _player != null and _player.has_method("get_bullet_time_world_scale"):
+		time_scale = _player.get_bullet_time_world_scale()
+	position += direction * speed * delta * time_scale
 
 
 func _on_body_entered(_body) -> void:

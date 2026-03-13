@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://bj0ddti5eq0mw"]
+
+[ext_resource type="PackedScene" uid="uid://cib3wh3lf8g5g" path="res://scenes/enemies/Enemy.tscn" id="1_base"]
+[ext_resource type="Texture2D" uid="uid://u7ymv5jbicop" path="res://assets/sprites/enemies/enemy_kitis.png" id="2_pc2hk"]
+
+[node name="EnemyFast" unique_id=1053995239 instance=ExtResource("1_base")]
+modulate = Color(0.88, 0.97, 1, 1)
+speed = 245.0
+attack_cooldown = 0.55
+max_health = 2
+
+[node name="Sprite2D" parent="." index="0" unique_id=1535695315]
+scale = Vector2(0.09198114, 0.09198116)
+texture = ExtResource("2_pc2hk")

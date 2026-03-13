@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://brhrn4fgum30m"
-path="res://.godot/imported/enemy.png-72d0570a0e01b919fab9ce93ca81d22b.ctex"
+uid="uid://diu1mp0js20vg"
+path="res://.godot/imported/boss_Ishanov.png-c5ac4ca0d389090911dd562607066414.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/enemies/enemy.png"
-dest_files=["res://.godot/imported/enemy.png-72d0570a0e01b919fab9ce93ca81d22b.ctex"]
+source_file="res://assets/sprites/enemies/boss_Ishanov.png"
+dest_files=["res://.godot/imported/boss_Ishanov.png-c5ac4ca0d389090911dd562607066414.ctex"]
 
 [params]
 

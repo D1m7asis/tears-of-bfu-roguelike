@@ -1,0 +1,11 @@
+[gd_scene format=3 uid="uid://ijevdvxbkkip"]
+
+[ext_resource type="PackedScene" uid="uid://cib3wh3lf8g5g" path="res://scenes/enemies/Enemy.tscn" id="1_base"]
+
+[node name="EnemyBoss" unique_id=1311897337 instance=ExtResource("1_base")]
+modulate = Color(1, 0.84, 0.84, 1)
+scale = Vector2(1.3, 1.3)
+speed = 145.0
+damage = 2
+attack_cooldown = 0.7
+max_health = 18

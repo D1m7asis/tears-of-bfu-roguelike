@@ -8,6 +8,7 @@ const MIN_VOLUME_DB: float = -40.0
 const MAX_VOLUME_DB: float = 0.0
 const NORMAL_PITCH_SCALE: float = 1.0
 const BULLET_TIME_PITCH_SCALE: float = 0.88
+const BULLET_TIME_TRANSITION_DURATION: float = 0.28
 
 var _generator_playback: AudioStreamGeneratorPlayback = null
 var _tracks: Array[String] = []
@@ -115,5 +116,5 @@ func set_bullet_time_audio(active: bool) -> void:
 
 	_pitch_tween = create_tween()
 	_pitch_tween.set_trans(Tween.TRANS_SINE)
-	_pitch_tween.set_ease(Tween.EASE_OUT)
-	_pitch_tween.tween_property(self, "pitch_scale", target_pitch, 0.16)
+	_pitch_tween.set_ease(Tween.EASE_IN_OUT)
+	_pitch_tween.tween_property(self, "pitch_scale", target_pitch, BULLET_TIME_TRANSITION_DURATION)

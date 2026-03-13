@@ -30,9 +30,11 @@ const ENTRY_OFFSETS := {
 
 @export var room_templates: Array[PackedScene] = []
 @export var start_room_template: PackedScene
+@export var boss_room_template: PackedScene
 @export var room_count: int = 12
 @export var branch_chance: float = 0.25
 @export var room_transition_fade_duration: float = 0.2
+@export var enemy_activation_delay: float = 0.25
 
 @onready var room_root: Node2D = get_parent().get_node("RoomRoot")
 @onready var player: CharacterBody2D = get_parent().get_node("Player")
@@ -46,9 +48,11 @@ var is_room_transitioning: bool = false
 func _ready() -> void:
 	add_to_group("room_manager")
 	generate_map()
+	_assign_boss_room()
 	emit_signal("map_generated", map)
 	print("rooms generated:", map.size())
 	load_room(Vector2i.ZERO, Dir.S)
+	call_deferred("_activate_current_room_enemies_after_delay")
 
 func generate_map() -> void:
 	map.clear()
@@ -235,4 +239,54 @@ func _finish_room_transition(next_pos: Vector2i, entered_from: int, exit_dir: in
 	if player != null and player.has_method("end_room_transition"):
 		player.end_room_transition()
 
+	await _activate_current_room_enemies_after_delay()
+
 	is_room_transitioning = false
+
+func _activate_current_room_enemies() -> void:
+	if current_room_instance != null and current_room_instance.has_method("set_enemies_active"):
+		current_room_instance.set_enemies_active(true)
+
+func _activate_current_room_enemies_after_delay() -> void:
+	if enemy_activation_delay > 0.0:
+		await get_tree().create_timer(enemy_activation_delay).timeout
+	_activate_current_room_enemies()
+
+func _assign_boss_room() -> void:
+	if boss_room_template == null:
+		return
+
+	var farthest_pos := _find_farthest_room_from_start()
+	if farthest_pos == Vector2i.ZERO:
+		return
+	if not map.has(farthest_pos):
+		return
+
+	map[farthest_pos]["template"] = boss_room_template
+
+func _find_farthest_room_from_start() -> Vector2i:
+	var distances: Dictionary = {Vector2i.ZERO: 0}
+	var queue: Array[Vector2i] = [Vector2i.ZERO]
+	var farthest_pos: Vector2i = Vector2i.ZERO
+	var farthest_distance: int = 0
+
+	while not queue.is_empty():
+		var pos: Vector2i = queue.pop_front()
+		var distance: int = distances[pos]
+
+		if distance > farthest_distance:
+			farthest_distance = distance
+			farthest_pos = pos
+
+		for dir in DIR_VECTORS.keys():
+			if map[pos]["doors_exist"][dir] != true:
+				continue
+
+			var next_pos: Vector2i = pos + DIR_VECTORS[dir]
+			if not map.has(next_pos) or distances.has(next_pos):
+				continue
+
+			distances[next_pos] = distance + 1
+			queue.append(next_pos)
+
+	return farthest_pos

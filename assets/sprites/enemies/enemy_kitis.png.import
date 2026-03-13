@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://brhrn4fgum30m"
-path="res://.godot/imported/enemy.png-72d0570a0e01b919fab9ce93ca81d22b.ctex"
+uid="uid://u7ymv5jbicop"
+path="res://.godot/imported/enemy_kitis.png-ff0d17bdd1e8b61d63c2ce2a739c54e8.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/enemies/enemy.png"
-dest_files=["res://.godot/imported/enemy.png-72d0570a0e01b919fab9ce93ca81d22b.ctex"]
+source_file="res://assets/sprites/enemies/enemy_kitis.png"
+dest_files=["res://.godot/imported/enemy_kitis.png-ff0d17bdd1e8b61d63c2ce2a739c54e8.ctex"]
 
 [params]
 

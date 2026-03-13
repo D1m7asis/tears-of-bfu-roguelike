@@ -1,11 +1,10 @@
-[gd_scene format=3 uid="uid://bc5po787nbhkv"]
+[gd_scene format=3 uid="uid://cl7pvc4fpejq1"]
 
 [ext_resource type="Script" uid="uid://wqt0s1xpd01l" path="res://scripts/core/room_base.gd" id="1_5wabu"]
-[ext_resource type="PackedScene" uid="uid://c2j7bnno174sx" path="res://scenes/ItemPickup.tscn" id="2_wkw30"]
 [ext_resource type="Texture2D" uid="uid://dplv68nlg47q4" path="res://assets/sprites/environment/floor.png" id="2_x8qha"]
 [ext_resource type="Texture2D" uid="uid://b8lc15kfwsxos" path="res://assets/sprites/environment/wall.png" id="3_wkw30"]
 [ext_resource type="PackedScene" uid="uid://cxp532p1tm6ic" path="res://scenes/rooms/Door.tscn" id="4_xqs35"]
-[ext_resource type="Resource" uid="uid://sssmhvho1726" path="res://assets/items/key.tres" id="6_wkw30"]
+[ext_resource type="PackedScene" path="res://scenes/ui/VictoryHatch.tscn" id="8_hatch"]
 [sub_resource type="Gradient" id="Gradient_ca18f"]
 colors = PackedColorArray(0.040984727, 0.0014341805, 0.06365898, 1, 0.016070971, 0.04371407, 0.058891274, 1)
 
@@ -7209,6 +7208,7 @@ size = Vector2(85.97, 675)
 [node name="RoomBase" type="Node2D" unique_id=1990760850]
 script = ExtResource("1_5wabu")
 spawn_enemy_layouts = false
+victory_hatch_scene = ExtResource("8_hatch")
 
 [node name="Background" type="Sprite2D" parent="." unique_id=404826333]
 z_index = -50
@@ -7317,8 +7317,10 @@ position = Vector2(2, 255)
 [node name="Spawn_W" type="Marker2D" parent="Spawns" unique_id=383418365]
 position = Vector2(-525, -2)
 
-[node name="ItemPickup" parent="." unique_id=817426506 instance=ExtResource("2_wkw30")]
-position = Vector2(-246, -117.99999)
-item_data = ExtResource("6_wkw30")
-
 [node name="Enemies" type="Node" parent="." unique_id=1936180586]
+
+[node name="BossSpawn" type="Marker2D" parent="."]
+position = Vector2(0, 0)
+
+[node name="HatchSpawn" type="Marker2D" parent="."]
+position = Vector2(0, 110)

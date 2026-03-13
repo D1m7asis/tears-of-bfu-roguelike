@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/ScreenFader.tscn" id="6_fader"]
 [ext_resource type="PackedScene" path="res://scenes/rooms/StartRoom.tscn" id="7_start"]
 [ext_resource type="PackedScene" path="res://scenes/ui/BackgroundMusic.tscn" id="8_music"]
+[ext_resource type="PackedScene" path="res://scenes/rooms/BossRoom.tscn" id="9_bossroom"]
 
 [node name="Game" type="Node2D" unique_id=985981684]
 
@@ -17,6 +18,7 @@
 script = ExtResource("3_cpr0p")
 room_templates = Array[PackedScene]([ExtResource("4_78awf")])
 start_room_template = ExtResource("7_start")
+boss_room_template = ExtResource("9_bossroom")
 
 [node name="Player" parent="." unique_id=1188411785 instance=ExtResource("1_qbsmt")]
 

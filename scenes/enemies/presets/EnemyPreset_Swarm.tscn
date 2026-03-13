@@ -1,0 +1,18 @@
+[gd_scene format=3]
+
+[node name="EnemyPresetSwarm" type="Node2D"]
+
+[node name="SlotA" type="Marker2D" parent="."]
+position = Vector2(-280, -120)
+
+[node name="SlotB" type="Marker2D" parent="."]
+position = Vector2(-90, 120)
+
+[node name="SlotC" type="Marker2D" parent="."]
+position = Vector2(80, -60)
+
+[node name="SlotD" type="Marker2D" parent="."]
+position = Vector2(250, 130)
+
+[node name="SlotE" type="Marker2D" parent="."]
+position = Vector2(0, 0)

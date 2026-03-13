@@ -1,5 +1,9 @@
 extends CharacterBody2D
 
+const SfxLibrary = preload("res://scripts/core/sfx_library.gd")
+const PLAYER_BASE_TEXTURE = preload("res://assets/sprites/player/player.png")
+const PLAYER_NEO_TEXTURE = preload("res://assets/sprites/player/player_neo.png")
+
 @export var speed: float = 300.0
 
 @onready var bullet_scene: PackedScene = preload("res://scenes/player/bullet.tscn")
@@ -15,6 +19,7 @@ var restart_hold_time: float = 0.0
 @onready var restart_overlay = null
 @onready var screen_fader = null
 @onready var camera: Camera2D = get_node_or_null("Camera2D")
+@onready var sprite: Sprite2D = get_node_or_null("Sprite2D")
 
 @export var max_health: int = 5
 var health: int = 0
@@ -26,6 +31,9 @@ var health: int = 0
 @export var death_hold_duration: float = 0.2
 @export var bullet_time_max_seconds: float = 5.0
 @export var bullet_time_kill_recharge_seconds: float = 1.0
+@export var bullet_time_ramp_in_duration: float = 0.22
+@export var bullet_time_ramp_out_duration: float = 0.12
+@export var bullet_time_slowdown_power: float = 3.2
 
 var door_lock_time: float = 0.0
 @export var door_lock_after_teleport: float = 0.25
@@ -34,12 +42,16 @@ var is_room_transitioning: bool = false
 var room_transition_tween: Tween = null
 var bullet_time_charge: float = 0.0
 var is_bullet_time_active: bool = false
+var bullet_time_blend: float = 0.0
 var background_music = null
+var _base_sprite_scale: Vector2 = Vector2.ONE
 
 func _ready() -> void:
 	add_to_group("player")
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
+	if sprite != null:
+		_base_sprite_scale = sprite.scale
 	health = max_health
 	bullet_time_charge = bullet_time_max_seconds
 	restart_overlay = get_tree().get_first_node_in_group("restart_overlay")
@@ -96,6 +108,8 @@ func _process(delta: float) -> void:
 		if bullet_time_charge <= 0.0:
 			_set_bullet_time_active(false)
 
+	_update_bullet_time_blend(delta)
+
 	if Input.is_action_just_pressed("shoot_right"):
 		shoot(Vector2.RIGHT)
 	elif Input.is_action_just_pressed("shoot_left"):
@@ -131,6 +145,7 @@ func shoot(dir: Vector2) -> void:
 	bullet.direction = dir
 	bullet.add_to_group("bullet")
 	get_tree().current_scene.add_child(bullet)
+	SfxLibrary.play_shoot(self)
 
 	await get_tree().create_timer(fire_cooldown).timeout
 	can_shoot = true
@@ -329,7 +344,16 @@ func _stop_room_transition_tween() -> void:
 		room_transition_tween = null
 
 func is_time_stopped() -> bool:
-	return is_bullet_time_active
+	return get_bullet_time_world_scale() <= 0.02
+
+func is_bullet_time_engaged() -> bool:
+	return bullet_time_blend > 0.01
+
+func get_bullet_time_world_scale() -> float:
+	var eased := pow(clampf(1.0 - bullet_time_blend, 0.0, 1.0), bullet_time_slowdown_power)
+	if bullet_time_blend <= 0.0:
+		return 1.0
+	return eased
 
 func on_enemy_killed() -> void:
 	bullet_time_charge = minf(bullet_time_max_seconds, bullet_time_charge + bullet_time_kill_recharge_seconds)
@@ -339,6 +363,7 @@ func _set_bullet_time_active(active: bool) -> void:
 	if is_bullet_time_active == active:
 		return
 	is_bullet_time_active = active
+	_update_player_sprite()
 	if background_music == null:
 		background_music = get_tree().get_first_node_in_group("background_music")
 	if background_music != null and background_music.has_method("set_bullet_time_audio"):
@@ -347,4 +372,42 @@ func _set_bullet_time_active(active: bool) -> void:
 
 func _update_hud_bullet_time() -> void:
 	if hud != null and hud.has_method("update_bullet_time"):
-		hud.update_bullet_time(bullet_time_charge, bullet_time_max_seconds, is_bullet_time_active)
+		hud.update_bullet_time(bullet_time_charge, bullet_time_max_seconds, is_bullet_time_active or bullet_time_blend > 0.0)
+
+func _update_bullet_time_blend(delta: float) -> void:
+	var target := 0.0
+	var duration := bullet_time_ramp_out_duration
+	if is_bullet_time_active:
+		target = 1.0
+		duration = bullet_time_ramp_in_duration
+
+	if duration <= 0.0:
+		bullet_time_blend = target
+		return
+
+	bullet_time_blend = move_toward(bullet_time_blend, target, delta / duration)
+
+func _update_player_sprite() -> void:
+	if sprite == null:
+		return
+
+	var target_texture := PLAYER_BASE_TEXTURE
+	if is_bullet_time_active:
+		target_texture = PLAYER_NEO_TEXTURE
+
+	sprite.texture = target_texture
+	sprite.scale = _scaled_sprite_size_for(target_texture)
+
+func _scaled_sprite_size_for(texture: Texture2D) -> Vector2:
+	if texture == null:
+		return _base_sprite_scale
+
+	var base_size := PLAYER_BASE_TEXTURE.get_size()
+	var texture_size := texture.get_size()
+	if base_size.x <= 0 or base_size.y <= 0 or texture_size.x <= 0 or texture_size.y <= 0:
+		return _base_sprite_scale
+
+	return Vector2(
+		_base_sprite_scale.x * float(base_size.x) / float(texture_size.x),
+		_base_sprite_scale.y * float(base_size.y) / float(texture_size.y)
+	)
