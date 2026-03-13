@@ -5,6 +5,7 @@ extends CanvasLayer
 @onready var overlay: ColorRect = $ColorRect
 
 var _tween: Tween = null
+var _glow_tween: Tween = null
 
 func _ready() -> void:
 	add_to_group("screen_fader")
@@ -22,6 +23,20 @@ func fade_from_black(duration: float = default_fade_duration) -> void:
 	if _tween != null:
 		await _tween.finished
 	if is_instance_valid(overlay):
+		overlay.visible = false
+
+func play_arrival_glow(duration: float = 0.22, glow_color: Color = Color(0, 0, 0, 0.18)) -> void:
+	if _glow_tween != null:
+		_glow_tween.kill()
+
+	overlay.visible = true
+	overlay.color = glow_color
+	_glow_tween = create_tween()
+	_glow_tween.set_trans(Tween.TRANS_SINE)
+	_glow_tween.set_ease(Tween.EASE_OUT)
+	_glow_tween.tween_property(overlay, "color:a", 0.0, max(duration, 0.01))
+	await _glow_tween.finished
+	if is_instance_valid(overlay) and overlay.color.a <= 0.001:
 		overlay.visible = false
 
 func _start_fade(target_alpha: float, duration: float) -> void:

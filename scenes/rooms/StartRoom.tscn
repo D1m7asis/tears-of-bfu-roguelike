@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://dwc2k6digm02y"]
+[gd_scene format=3 uid="uid://bc5po787nbhkv"]
 
 [ext_resource type="Script" uid="uid://wqt0s1xpd01l" path="res://scripts/core/room_base.gd" id="1_5wabu"]
 [ext_resource type="PackedScene" uid="uid://c2j7bnno174sx" path="res://scenes/ItemPickup.tscn" id="2_wkw30"]
@@ -7323,6 +7323,3 @@ position = Vector2(-246, -117.99999)
 item_data = ExtResource("6_wkw30")
 
 [node name="Enemies" type="Node" parent="." unique_id=1936180586]
-
-[node name="Enemy6" parent="Enemies" unique_id=1985602731 instance=ExtResource("7_xqs35")]
-position = Vector2(-326, 189)

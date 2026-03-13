@@ -6,6 +6,8 @@
 [ext_resource type="PackedScene" uid="uid://dwc2k6digm02y" path="res://scenes/rooms/Room_Base.tscn" id="4_78awf"]
 [ext_resource type="PackedScene" uid="uid://bw7acm0bsiroe" path="res://scenes/ui/RestartOverlay.tscn" id="5_s0nni"]
 [ext_resource type="PackedScene" path="res://scenes/ui/ScreenFader.tscn" id="6_fader"]
+[ext_resource type="PackedScene" path="res://scenes/rooms/StartRoom.tscn" id="7_start"]
+[ext_resource type="PackedScene" path="res://scenes/ui/BackgroundMusic.tscn" id="8_music"]
 
 [node name="Game" type="Node2D" unique_id=985981684]
 
@@ -14,6 +16,7 @@
 [node name="RoomManager" type="Node" parent="." unique_id=1428076604]
 script = ExtResource("3_cpr0p")
 room_templates = Array[PackedScene]([ExtResource("4_78awf")])
+start_room_template = ExtResource("7_start")
 
 [node name="Player" parent="." unique_id=1188411785 instance=ExtResource("1_qbsmt")]
 
@@ -24,3 +27,5 @@ room_templates = Array[PackedScene]([ExtResource("4_78awf")])
 [node name="Camera2D" type="Camera2D" parent="Player" unique_id=512636328]
 
 [node name="ScreenFader" parent="." instance=ExtResource("6_fader")]
+
+[node name="BackgroundMusic" parent="." instance=ExtResource("8_music")]

@@ -15,6 +15,7 @@ func apply_room_data(data: Dictionary) -> void:
 	_apply_one(door_w, exist[RoomManager.Dir.W], open[RoomManager.Dir.W])
 
 func _apply_one(door, exists: bool, opened: bool) -> void:
-	door.visible = exists
+	if door.has_method("set_exists"):
+		door.set_exists(exists)
 	door.starts_open = opened
 	door.set_open(opened)

@@ -14,6 +14,7 @@ var inventory: Array[Dictionary] = []
 var restart_hold_time: float = 0.0
 @onready var restart_overlay = null
 @onready var screen_fader = null
+@onready var camera: Camera2D = get_node_or_null("Camera2D")
 
 @export var max_health: int = 5
 var health: int = 0
@@ -27,9 +28,12 @@ var health: int = 0
 var door_lock_time: float = 0.0
 @export var door_lock_after_teleport: float = 0.25
 var is_dying: bool = false
+var is_room_transitioning: bool = false
+var room_transition_tween: Tween = null
 
 func _ready() -> void:
 	add_to_group("player")
+	process_mode = Node.PROCESS_MODE_ALWAYS
 
 	health = max_health
 	restart_overlay = get_tree().get_first_node_in_group("restart_overlay")
@@ -37,8 +41,8 @@ func _ready() -> void:
 	_resolve_screen_fader()
 	_update_hud_all()
 
-func _physics_process(delta: float) -> void:
-	if is_dying:
+func _physics_process(_delta: float) -> void:
+	if is_dying or is_room_transitioning:
 		velocity = Vector2.ZERO
 		return
 
@@ -62,14 +66,11 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 func _process(delta: float) -> void:
-	if is_dying:
+	if is_dying or is_room_transitioning:
 		return
 
 	if door_lock_time > 0.0:
 		door_lock_time -= delta
-
-	if Input.is_action_just_pressed("pause_game"):
-		get_tree().paused = not get_tree().paused
 
 	if Input.is_action_just_pressed("shoot_right"):
 		shoot(Vector2.RIGHT)
@@ -95,7 +96,7 @@ func _process(delta: float) -> void:
 			restart_overlay.set_progress(0.0)
 
 func shoot(dir: Vector2) -> void:
-	if is_dying or not can_shoot:
+	if is_dying or is_room_transitioning or not can_shoot:
 		return
 	can_shoot = false
 
@@ -240,10 +241,60 @@ func lock_doors() -> void:
 	door_lock_time = door_lock_after_teleport
 
 func can_use_doors() -> bool:
-	return door_lock_time <= 0.0
+	return door_lock_time <= 0.0 and not is_room_transitioning
+
+func begin_room_transition(exit_dir: int) -> void:
+	is_room_transitioning = true
+	velocity = Vector2.ZERO
+
+	if camera == null:
+		return
+
+	var direction := _transition_direction(exit_dir)
+	_stop_room_transition_tween()
+
+	room_transition_tween = create_tween()
+	room_transition_tween.set_trans(Tween.TRANS_SINE)
+	room_transition_tween.set_ease(Tween.EASE_IN)
+	room_transition_tween.parallel().tween_property(camera, "offset", direction * 10.0, 0.16)
+	room_transition_tween.parallel().tween_property(camera, "zoom", Vector2(1.025, 1.025), 0.16)
+
+func end_room_transition() -> void:
+	is_room_transitioning = false
+	velocity = Vector2.ZERO
+
+func play_room_arrival_effect(entered_from: int) -> void:
+	if camera == null:
+		return
+
+	_stop_room_transition_tween()
+
+	room_transition_tween = create_tween()
+	room_transition_tween.set_trans(Tween.TRANS_SINE)
+	room_transition_tween.set_ease(Tween.EASE_OUT)
+	room_transition_tween.parallel().tween_property(camera, "offset", Vector2.ZERO, 0.26)
+	room_transition_tween.parallel().tween_property(camera, "zoom", Vector2.ONE, 0.28)
+	await room_transition_tween.finished
 
 func _resolve_screen_fader() -> void:
 	if screen_fader == null:
 		screen_fader = get_tree().get_first_node_in_group("screen_fader")
 	if screen_fader == null and get_parent() != null:
 		screen_fader = get_parent().get_node_or_null("ScreenFader")
+
+func _transition_direction(dir: int) -> Vector2:
+	match dir:
+		RoomManager.Dir.N:
+			return Vector2(0, -1)
+		RoomManager.Dir.E:
+			return Vector2(1, 0)
+		RoomManager.Dir.S:
+			return Vector2(0, 1)
+		RoomManager.Dir.W:
+			return Vector2(-1, 0)
+	return Vector2.ZERO
+
+func _stop_room_transition_tween() -> void:
+	if room_transition_tween != null:
+		room_transition_tween.kill()
+		room_transition_tween = null

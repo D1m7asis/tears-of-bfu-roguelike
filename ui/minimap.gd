@@ -50,21 +50,21 @@ func _draw() -> void:
 		return
 
 	# "видимые" клетки: visited + (опционально) соседи visited комнат
-	var visible: Dictionary = {} # Dictionary[Vector2i, bool]
+	var visible_rooms: Dictionary = {} # Dictionary[Vector2i, bool]
 	for p in map_data.keys():
 		var room: Dictionary = map_data[p] as Dictionary
 		if room.get("visited", false) == true:
-			visible[p] = true
+			visible_rooms[p] = true
 
 			if show_unvisited_neighbors:
 				var doors_exist: Dictionary = room.get("doors_exist", {}) as Dictionary
 				for d in doors_exist.keys():
 					if doors_exist[d] == true:
 						var np: Vector2i = (p as Vector2i) + _dir_vec(int(d))
-						if map_data.has(np) and not visible.has(np):
-							visible[np] = false
+						if map_data.has(np) and not visible_rooms.has(np):
+							visible_rooms[np] = false
 
-	if visible.is_empty():
+	if visible_rooms.is_empty():
 		return
 
 	var min_x: int = 999999
@@ -72,7 +72,7 @@ func _draw() -> void:
 	var max_x: int = -999999
 	var max_y: int = -999999
 
-	for vp in visible.keys():
+	for vp in visible_rooms.keys():
 		var pp: Vector2i = vp as Vector2i
 		min_x = min(min_x, pp.x)
 		min_y = min(min_y, pp.y)
@@ -113,7 +113,7 @@ func _draw() -> void:
 			var np: Vector2i = pos + _dir_vec(d)
 			if not map_data.has(np):
 				continue
-			if not visible.has(np):
+			if not visible_rooms.has(np):
 				continue
 
 			var b_center: Vector2 = _cell_center(np, origin, min_x, min_y, step)
@@ -125,9 +125,9 @@ func _draw() -> void:
 			draw_line(a_center, b_center, col, width)
 
 	# комнаты
-	for vp in visible.keys():
+	for vp in visible_rooms.keys():
 		var pos2: Vector2i = vp as Vector2i
-		var is_visited: bool = bool(visible[pos2])
+		var is_visited: bool = bool(visible_rooms[pos2])
 		var is_current: bool = (pos2 == current_pos)
 
 		var top_left: Vector2 = _cell_top_left(pos2, origin, min_x, min_y, step)
