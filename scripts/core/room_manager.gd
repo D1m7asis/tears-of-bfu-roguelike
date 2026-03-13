@@ -84,6 +84,7 @@ func _create_room(pos: Vector2i) -> void:
 		"doors_open": { Dir.N: false, Dir.E: false, Dir.S: false, Dir.W: false },
 
 		"template": tpl,
+		"instance": null,
 		"visited": false,
 	}
 
@@ -99,24 +100,35 @@ func load_room(pos: Vector2i, entered_from: int) -> void:
 	if not map.has(pos):
 		return
 
+	var room_data: Dictionary = map[pos]
 	current_pos = pos
-	map[pos]["visited"] = true
+	room_data["visited"] = true
 	emit_signal("room_loaded", pos)
 
 	if current_room_instance != null:
-		current_room_instance.queue_free()
+		if current_room_instance.get_parent() == room_root:
+			room_root.remove_child(current_room_instance)
 		current_room_instance = null
 
-	var tpl: PackedScene = map[pos]["template"]
-	if tpl == null:
-		push_error("Room template is null. Assign room_templates.")
-		return
+	var room_instance: Node = room_data.get("instance", null)
+	if room_instance == null:
+		var tpl: PackedScene = room_data["template"]
+		if tpl == null:
+			push_error("Room template is null. Assign room_templates.")
+			return
 
-	current_room_instance = tpl.instantiate()
-	room_root.add_child(current_room_instance)
+		room_instance = tpl.instantiate()
+		room_data["instance"] = room_instance
+		map[pos] = room_data
+
+	current_room_instance = room_instance
+	if current_room_instance.get_parent() != room_root:
+		if current_room_instance.get_parent() != null:
+			current_room_instance.get_parent().remove_child(current_room_instance)
+		room_root.add_child(current_room_instance)
 
 	if current_room_instance.has_method("apply_room_data"):
-		current_room_instance.apply_room_data(map[pos])
+		current_room_instance.apply_room_data(room_data)
 
 	_spawn_player_at_entry(entered_from)
 
@@ -167,6 +179,8 @@ func _spawn_player_at_entry(entered_from: int) -> void:
 		Dir.W: marker_name = "Spawn_W"
 
 	var marker := current_room_instance.get_node_or_null(marker_name)
+	if marker == null:
+		marker = current_room_instance.get_node_or_null("Spawns/" + marker_name)
 	if marker != null and marker is Node2D:
 		player.global_position = (marker as Node2D).global_position
 	else:

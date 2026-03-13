@@ -5,6 +5,7 @@
 [ext_resource type="Script" uid="uid://kse2a0kbrswd" path="res://scripts/core/room_manager.gd" id="3_cpr0p"]
 [ext_resource type="PackedScene" uid="uid://dwc2k6digm02y" path="res://scenes/rooms/Room_Base.tscn" id="4_78awf"]
 [ext_resource type="PackedScene" uid="uid://bw7acm0bsiroe" path="res://scenes/ui/RestartOverlay.tscn" id="5_s0nni"]
+[ext_resource type="PackedScene" path="res://scenes/ui/ScreenFader.tscn" id="6_fader"]
 
 [node name="Game" type="Node2D" unique_id=985981684]
 
@@ -21,3 +22,5 @@ room_templates = Array[PackedScene]([ExtResource("4_78awf")])
 [node name="RestartOverlay" parent="Player" unique_id=960733918 groups=["restart_overlay"] instance=ExtResource("5_s0nni")]
 
 [node name="Camera2D" type="Camera2D" parent="Player" unique_id=512636328]
+
+[node name="ScreenFader" parent="." instance=ExtResource("6_fader")]
