@@ -1,6 +1,6 @@
 extends CharacterBody2D
 
-const SfxLibrary = preload("res://scripts/core/sfx_library.gd")
+const SfxLib = preload("res://scripts/core/sfx_library.gd")
 const PLAYER_BASE_TEXTURE = preload("res://assets/sprites/player/player.png")
 const PLAYER_NEO_TEXTURE = preload("res://assets/sprites/player/player_neo.png")
 
@@ -145,16 +145,16 @@ func shoot(dir: Vector2) -> void:
 	bullet.direction = dir
 	bullet.add_to_group("bullet")
 	get_tree().current_scene.add_child(bullet)
-	SfxLibrary.play_shoot(self)
+	SfxLib.play_shoot(self)
 
 	await get_tree().create_timer(fire_cooldown).timeout
 	can_shoot = true
 
 func add_item(item: ItemData, amount: int = 1) -> bool:
-	print(item)
-
 	if item == null or amount <= 0:
 		return false
+	if item.pickup_kind == "heal":
+		return heal(item.heal_amount * amount)
 
 	if item.stackable:
 		for slot in inventory:
@@ -237,6 +237,23 @@ func take_damage(amount: int) -> void:
 	if health <= 0:
 		die()
 
+func heal(amount: int) -> bool:
+	if amount <= 0 or health >= max_health:
+		return false
+
+	health = min(max_health, health + amount)
+	_update_hud_health()
+	return true
+
+func needs_healing() -> bool:
+	return health < max_health
+
+func get_health() -> int:
+	return health
+
+func get_max_health() -> int:
+	return max_health
+
 func die() -> void:
 	if is_dying:
 		return
@@ -269,7 +286,7 @@ func win() -> void:
 
 func _update_hud_health() -> void:
 	if hud != null and hud.has_method("update_health"):
-		hud.update_health(health)
+		hud.update_health(health, max_health)
 
 func _update_hud_keys() -> void:
 	if hud != null and hud.has_method("update_keys"):

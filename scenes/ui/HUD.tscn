@@ -2,21 +2,20 @@
 
 [ext_resource type="Script" uid="uid://dp316kcuxsq3u" path="res://ui/hud.gd" id="1_kw0id"]
 [ext_resource type="Script" uid="uid://bvqiylgqlkp1x" path="res://ui/minimap.gd" id="2_atyv1"]
+[ext_resource type="Script" path="res://ui/heart_bar.gd" id="3_hearts"]
 
 [node name="HUD" type="CanvasLayer" unique_id=1571570090 groups=["hud"]]
 process_mode = 3
 script = ExtResource("1_kw0id")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1818982439]
-offset_right = 156.42
-offset_bottom = 113.0
+offset_right = 260.0
+offset_bottom = 140.0
 
-[node name="HealthLabel" type="Label" parent="VBoxContainer" unique_id=432697207]
+[node name="HeartBar" type="Control" parent="VBoxContainer"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 20
-text = "HP: 5"
+custom_minimum_size = Vector2(170, 26)
+script = ExtResource("3_hearts")
 
 [node name="KeyLabel" type="Label" parent="VBoxContainer" unique_id=315145075]
 layout_mode = 2
@@ -143,9 +142,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -180.0
-offset_top = -120.0
+offset_top = -150.0
 offset_right = 180.0
-offset_bottom = 120.0
+offset_bottom = 150.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -184,6 +183,18 @@ max_value = 100.0
 value = 50.0
 size_flags_horizontal = 3
 
+[node name="SfxValueLabel" type="Label" parent="PauseOverlay/PausePanel/PauseContent"]
+layout_mode = 2
+text = "SFX: 75%"
+horizontal_alignment = 1
+
+[node name="SfxSlider" type="HSlider" parent="PauseOverlay/PausePanel/PauseContent"]
+layout_mode = 2
+min_value = 0.0
+max_value = 100.0
+value = 75.0
+size_flags_horizontal = 3
+
 [node name="Buttons" type="HBoxContainer" parent="PauseOverlay/PausePanel/PauseContent"]
 layout_mode = 2
 alignment = 1
@@ -198,5 +209,6 @@ layout_mode = 2
 text = "Restart"
 
 [connection signal="value_changed" from="PauseOverlay/PausePanel/PauseContent/MusicSlider" to="." method="_on_music_slider_value_changed"]
+[connection signal="value_changed" from="PauseOverlay/PausePanel/PauseContent/SfxSlider" to="." method="_on_sfx_slider_value_changed"]
 [connection signal="pressed" from="PauseOverlay/PausePanel/PauseContent/Buttons/ResumeButton" to="." method="_on_resume_button_pressed"]
 [connection signal="pressed" from="PauseOverlay/PausePanel/PauseContent/Buttons/RestartButton" to="." method="_on_restart_button_pressed"]

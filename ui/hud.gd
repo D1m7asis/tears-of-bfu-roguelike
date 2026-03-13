@@ -1,8 +1,9 @@
 extends CanvasLayer
 
 const BULLET_TIME_SHADER = preload("res://assets/shaders/bullet_time_overlay.gdshader")
+const SfxLib = preload("res://scripts/core/sfx_library.gd")
 
-@onready var health_label: Label = $VBoxContainer/HealthLabel
+@onready var heart_bar: Control = $VBoxContainer/HeartBar
 @onready var key_label: Label = $VBoxContainer/KeyLabel
 @onready var hint_label: Label = $VBoxContainer/HintLabel
 @onready var bullet_time_bar: ProgressBar = $VBoxContainer/BulletTimeBar
@@ -17,6 +18,8 @@ const BULLET_TIME_SHADER = preload("res://assets/shaders/bullet_time_overlay.gds
 @onready var pause_panel: Panel = $PauseOverlay/PausePanel
 @onready var music_slider: HSlider = $PauseOverlay/PausePanel/PauseContent/MusicSlider
 @onready var music_value_label: Label = $PauseOverlay/PausePanel/PauseContent/MusicValueLabel
+@onready var sfx_slider: HSlider = $PauseOverlay/PausePanel/PauseContent/SfxSlider
+@onready var sfx_value_label: Label = $PauseOverlay/PausePanel/PauseContent/SfxValueLabel
 
 var _background_music = null
 var _pause_open: bool = false
@@ -30,12 +33,13 @@ var _bullet_time_overlay_active: bool = false
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_setup_bullet_time_shader()
-	update_health(0)
+	update_health(0, 0)
 	update_keys(0)
 	update_bullet_time(0.0, 5.0, false)
 	set_hint("WASD move, Arrows shoot, Space bullet time, Hold R restart, Esc pause")
 	_resolve_background_music()
 	_sync_music_slider()
+	_sync_sfx_slider()
 	_set_pause_open(false)
 
 	var rm := get_tree().get_first_node_in_group("room_manager")
@@ -47,8 +51,12 @@ func _input(event: InputEvent) -> void:
 		_toggle_pause()
 		get_viewport().set_input_as_handled()
 
-func update_health(value: int) -> void:
-	health_label.text = "HP: " + str(value)
+func update_health(current: int, max_value: int = -1) -> void:
+	if heart_bar == null or not heart_bar.has_method("set_health"):
+		return
+	if max_value < 0:
+		max_value = current
+	heart_bar.set_health(current, max_value)
 
 func update_keys(value: int) -> void:
 	key_label.text = "Keys: " + str(value)
@@ -86,6 +94,7 @@ func _set_pause_open(open: bool) -> void:
 		pause_panel.visible = open
 	if open:
 		_sync_music_slider()
+		_sync_sfx_slider()
 	get_tree().paused = open
 
 func _resolve_background_music() -> void:
@@ -108,12 +117,28 @@ func _update_music_value_label(percent: float) -> void:
 	if music_value_label != null:
 		music_value_label.text = "Music: " + str(int(round(percent))) + "%"
 
+func _sync_sfx_slider() -> void:
+	if sfx_slider == null:
+		return
+
+	var percent := SfxLib.get_sfx_volume_percent()
+	sfx_slider.value = percent
+	_update_sfx_value_label(percent)
+
+func _update_sfx_value_label(percent: float) -> void:
+	if sfx_value_label != null:
+		sfx_value_label.text = "SFX: " + str(int(round(percent))) + "%"
+
 func _on_music_slider_value_changed(value: float) -> void:
 	_update_music_value_label(value)
 	if _background_music == null:
 		_resolve_background_music()
 	if _background_music != null and _background_music.has_method("set_music_volume_percent"):
 		_background_music.set_music_volume_percent(value)
+
+func _on_sfx_slider_value_changed(value: float) -> void:
+	_update_sfx_value_label(value)
+	SfxLib.set_sfx_volume_percent(value)
 
 func _on_resume_button_pressed() -> void:
 	_set_pause_open(false)

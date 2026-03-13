@@ -1,7 +1,7 @@
 extends AudioStreamPlayer
 
 @export var music_folder: String = "res://assets/audio/music"
-@export var music_volume_db: float = -12.0
+@export var music_volume_db: float = -18.0
 
 const SUPPORTED_EXTENSIONS := ["mp3", "ogg", "wav"]
 const MIN_VOLUME_DB: float = -40.0

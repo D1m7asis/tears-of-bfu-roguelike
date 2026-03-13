@@ -1,6 +1,8 @@
 extends CharacterBody2D
 
-const SfxLibrary = preload("res://scripts/core/sfx_library.gd")
+const SfxLib = preload("res://scripts/core/sfx_library.gd")
+const HEART_PICKUP_SCENE = preload("res://scenes/ItemPickup.tscn")
+const HEART_ITEM_DATA = preload("res://assets/items/heart.tres")
 
 signal died(enemy: CharacterBody2D)
 
@@ -9,6 +11,7 @@ signal died(enemy: CharacterBody2D)
 @export var attack_cooldown: float = 1.0
 
 @export var max_health: int = 3
+@export var heart_drop_chance: float = 0.25
 var health: int = 0
 
 var can_attack: bool = true
@@ -72,7 +75,8 @@ func die():
 	self.speed = 0
 	velocity = Vector2.ZERO
 	modulate = Color(0.62, 0.08, 0.12, 1.0)
-	SfxLibrary.play_enemy_death(self)
+	SfxLib.play_enemy_death(self)
+	call_deferred("_maybe_drop_heart_deferred")
 	if player == null:
 		player = get_tree().get_first_node_in_group("player")
 	if player != null and player.has_method("on_enemy_killed"):
@@ -89,3 +93,37 @@ func set_active(active: bool) -> void:
 	is_active = active
 	if not active:
 		velocity = Vector2.ZERO
+
+func _maybe_drop_heart_deferred() -> void:
+	if HEART_PICKUP_SCENE == null or HEART_ITEM_DATA == null:
+		return
+	if randf() > heart_drop_chance:
+		return
+	if player == null:
+		player = get_tree().get_first_node_in_group("player")
+	if player == null:
+		return
+	if player.has_method("needs_healing") and not bool(player.call("needs_healing")):
+		return
+
+	var pickup := HEART_PICKUP_SCENE.instantiate()
+	if pickup == null:
+		return
+
+	pickup.set("item_data", HEART_ITEM_DATA)
+	pickup.set("amount", 1)
+
+	var parent := get_parent()
+	if parent == null:
+		parent = get_tree().current_scene
+	if parent == null:
+		return
+
+	var angle := randf_range(-1.1, 1.1)
+	var distance := randf_range(34.0, 52.0)
+	var offset := Vector2.RIGHT.rotated(angle) * distance
+	offset.y -= randf_range(10.0, 18.0)
+
+	parent.call_deferred("add_child", pickup)
+	if pickup is Node2D:
+		(pickup as Node2D).set_deferred("global_position", global_position + offset)

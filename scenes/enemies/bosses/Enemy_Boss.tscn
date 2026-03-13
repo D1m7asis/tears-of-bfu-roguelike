@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://ijevdvxbkkip"]
 
 [ext_resource type="PackedScene" uid="uid://cib3wh3lf8g5g" path="res://scenes/enemies/Enemy.tscn" id="1_base"]
+[ext_resource type="Texture2D" uid="uid://diu1mp0js20vg" path="res://assets/sprites/enemies/boss_Ishanov.png" id="2_xtenc"]
 
 [node name="EnemyBoss" unique_id=1311897337 instance=ExtResource("1_base")]
 modulate = Color(1, 0.84, 0.84, 1)
@@ -9,3 +10,13 @@ speed = 145.0
 damage = 2
 attack_cooldown = 0.7
 max_health = 18
+
+[node name="Sprite2D" parent="." index="0" unique_id=1535695315]
+scale = Vector2(0.15091814, 0.15091816)
+texture = ExtResource("2_xtenc")
+
+[node name="CollisionShape2D" parent="." index="1" unique_id=2108951110]
+scale = Vector2(1.6769233, 1.6769233)
+
+[node name="DamageArea" parent="." index="2" unique_id=1687160789]
+scale = Vector2(1.6769233, 1.6769233)

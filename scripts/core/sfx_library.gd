@@ -14,11 +14,12 @@ const ENEMY_DEATH_PATHS := [
 ]
 
 static var _stream_cache: Dictionary = {}
+static var _sfx_volume_percent: float = 75.0
 
-static func play_shoot(source: Node, volume_db: float = -8.0) -> void:
+static func play_shoot(source: Node, volume_db: float = -4.5) -> void:
 	_play(source, "shoot", volume_db)
 
-static func play_enemy_death(source: Node, volume_db: float = -7.0) -> void:
+static func play_enemy_death(source: Node, volume_db: float = -3.5) -> void:
 	_play(source, "enemy_death", volume_db)
 
 static func _play(source: Node, kind: String, volume_db: float) -> void:
@@ -26,7 +27,7 @@ static func _play(source: Node, kind: String, volume_db: float) -> void:
 		return
 
 	var player := AudioStreamPlayer2D.new()
-	player.volume_db = volume_db
+	player.volume_db = _resolve_output_volume_db(volume_db)
 	player.max_distance = 1600.0
 	player.attenuation = 1.2
 	player.stream = _get_stream(kind)
@@ -37,6 +38,12 @@ static func _play(source: Node, kind: String, volume_db: float) -> void:
 	source.get_tree().current_scene.add_child(player)
 	player.play()
 	player.finished.connect(player.queue_free)
+
+static func set_sfx_volume_percent(percent: float) -> void:
+	_sfx_volume_percent = clampf(percent, 0.0, 100.0)
+
+static func get_sfx_volume_percent() -> float:
+	return _sfx_volume_percent
 
 static func _get_stream(kind: String) -> AudioStream:
 	if _stream_cache.has(kind):
@@ -100,3 +107,8 @@ static func _generate_tone_stream(start_freq: float, duration: float, amplitude:
 	stream.stereo = false
 	stream.data = data
 	return stream
+
+static func _resolve_output_volume_db(base_volume_db: float) -> float:
+	if _sfx_volume_percent <= 0.0:
+		return -80.0
+	return base_volume_db + linear_to_db(_sfx_volume_percent / 100.0)

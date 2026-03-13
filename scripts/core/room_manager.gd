@@ -227,6 +227,7 @@ func _finish_room_transition(next_pos: Vector2i, entered_from: int, exit_dir: in
 	if screen_fader != null and screen_fader.has_method("fade_to_black"):
 		await screen_fader.fade_to_black(room_transition_fade_duration)
 
+	_clear_active_bullets()
 	load_room(next_pos, entered_from)
 
 	if screen_fader != null and screen_fader.has_method("fade_from_black"):
@@ -251,6 +252,11 @@ func _activate_current_room_enemies_after_delay() -> void:
 	if enemy_activation_delay > 0.0:
 		await get_tree().create_timer(enemy_activation_delay).timeout
 	_activate_current_room_enemies()
+
+func _clear_active_bullets() -> void:
+	for bullet in get_tree().get_nodes_in_group("bullet"):
+		if bullet != null:
+			bullet.queue_free()
 
 func _assign_boss_room() -> void:
 	if boss_room_template == null:
