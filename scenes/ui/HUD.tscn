@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://dnlpoa076w31e"]
 
 [ext_resource type="Script" uid="uid://dp316kcuxsq3u" path="res://ui/hud.gd" id="1_kw0id"]
+[ext_resource type="Script" uid="uid://bvqiylgqlkp1x" path="res://ui/minimap.gd" id="2_atyv1"]
 
 [node name="HUD" type="CanvasLayer" unique_id=1571570090 groups=["hud"]]
 process_mode = 3
@@ -30,3 +31,13 @@ theme_override_colors/font_color = Color(0.5729883, 0.5729883, 0.5729883, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 text = "Hint: 123 456"
 autowrap_mode = 2
+
+[node name="Minimap" type="Control" parent="." unique_id=2057166883]
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -200.0
+offset_bottom = 200.0
+grow_horizontal = 0
+script = ExtResource("2_atyv1")

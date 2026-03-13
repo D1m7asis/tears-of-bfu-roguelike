@@ -1,0 +1,11 @@
+[gd_scene format=3 uid="uid://dgju0nkgwej0p"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_12rxx"]
+
+[node name="GameOver" type="Node2D" unique_id=1627453236]
+
+[node name="Label" type="Label" parent="." unique_id=168383998]
+offset_right = 523.4783
+offset_bottom = 172.0
+text = "U r ded :("
+label_settings = SubResource("LabelSettings_12rxx")

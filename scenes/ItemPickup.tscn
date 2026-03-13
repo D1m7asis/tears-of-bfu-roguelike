@@ -7,7 +7,9 @@
 size = Vector2(9.328158, 20)
 
 [node name="ItemPickup" type="Area2D" unique_id=817426506]
-scale = Vector2(2.5728552, 2.5728552)
+scale = Vector2(3, 3)
+collision_layer = 4
+collision_mask = 2
 script = ExtResource("1_1m3bo")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1500116108]

@@ -1,6 +1,10 @@
 extends Node
 class_name RoomManager
 
+signal map_generated(map_data: Dictionary)
+signal room_loaded(pos: Vector2i)
+signal connection_unlocked(from_pos: Vector2i, dir: int)
+
 enum Dir { N, E, S, W }
 
 const DIR_VECTORS := {
@@ -28,20 +32,22 @@ var map: Dictionary = {} # Vector2i -> Dictionary
 var current_pos: Vector2i = Vector2i.ZERO
 var current_room_instance: Node = null
 
-func _ready():
+func _ready() -> void:
 	add_to_group("room_manager")
 	generate_map()
+	emit_signal("map_generated", map)
+	print("rooms generated:", map.size())
 	load_room(Vector2i.ZERO, Dir.S)
 
-func generate_map():
+func generate_map() -> void:
 	map.clear()
 	_create_room(Vector2i.ZERO)
 
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
 
-	var pos := Vector2i.ZERO
-	var created := 1
+	var pos: Vector2i = Vector2i.ZERO
+	var created: int = 1
 
 	while created < room_count:
 		var dir: int = rng.randi_range(0, 3)
@@ -63,28 +69,39 @@ func generate_map():
 				_link_rooms(pos, bpos, bdir)
 				created += 1
 
-func _create_room(pos: Vector2i):
+func _create_room(pos: Vector2i) -> void:
 	var tpl: PackedScene = null
 	if room_templates.size() > 0:
 		tpl = room_templates.pick_random()
 
 	map[pos] = {
 		"pos": pos,
-		"doors": { Dir.N: false, Dir.E: false, Dir.S: false, Dir.W: false },
+
+		# проход существует?
+		"doors_exist": { Dir.N: false, Dir.E: false, Dir.S: false, Dir.W: false },
+
+		# проход открыт?
+		"doors_open": { Dir.N: false, Dir.E: false, Dir.S: false, Dir.W: false },
+
 		"template": tpl,
 		"visited": false,
 	}
 
-func _link_rooms(a: Vector2i, b: Vector2i, dir_from_a_to_b: int):
-	map[a]["doors"][dir_from_a_to_b] = true
-	map[b]["doors"][OPPOSITE[dir_from_a_to_b]] = true
+func _link_rooms(a: Vector2i, b: Vector2i, dir_from_a_to_b: int) -> void:
+	map[a]["doors_exist"][dir_from_a_to_b] = true
+	map[b]["doors_exist"][OPPOSITE[dir_from_a_to_b]] = true
 
-func load_room(pos: Vector2i, entered_from: int):
+	# по умолчанию эти проходы закрыты, пока не откроют ключом
+	map[a]["doors_open"][dir_from_a_to_b] = false
+	map[b]["doors_open"][OPPOSITE[dir_from_a_to_b]] = false
+
+func load_room(pos: Vector2i, entered_from: int) -> void:
 	if not map.has(pos):
 		return
 
 	current_pos = pos
 	map[pos]["visited"] = true
+	emit_signal("room_loaded", pos)
 
 	if current_room_instance != null:
 		current_room_instance.queue_free()
@@ -103,10 +120,16 @@ func load_room(pos: Vector2i, entered_from: int):
 
 	_spawn_player_at_entry(entered_from)
 
-func try_move(dir: int):
+func try_move(dir: int) -> void:
 	if not map.has(current_pos):
 		return
-	if map[current_pos]["doors"][dir] != true:
+
+	# должен существовать проход
+	if map[current_pos]["doors_exist"][dir] != true:
+		return
+
+	# и он должен быть открыт
+	if map[current_pos]["doors_open"][dir] != true:
 		return
 
 	var next_pos: Vector2i = current_pos + DIR_VECTORS[dir]
@@ -115,8 +138,28 @@ func try_move(dir: int):
 
 	load_room(next_pos, OPPOSITE[dir])
 
-func _spawn_player_at_entry(entered_from: int):
-	var marker_name := ""
+# открывает связь "насквозь"
+func unlock_connection(dir: int) -> void:
+	var a: Vector2i = current_pos
+	var b: Vector2i = current_pos + DIR_VECTORS[dir]
+	if not map.has(b):
+		return
+
+	# если прохода нет, нечего открывать
+	if map[a]["doors_exist"][dir] != true:
+		return
+
+	map[a]["doors_open"][dir] = true
+	map[b]["doors_open"][OPPOSITE[dir]] = true
+
+	# обновляем текущую комнату, чтобы дверь визуально открылась
+	if current_room_instance != null and current_room_instance.has_method("apply_room_data"):
+		current_room_instance.apply_room_data(map[a])
+
+	emit_signal("connection_unlocked", current_pos, dir)
+
+func _spawn_player_at_entry(entered_from: int) -> void:
+	var marker_name: String = ""
 	match entered_from:
 		Dir.N: marker_name = "Spawn_N"
 		Dir.E: marker_name = "Spawn_E"
@@ -128,3 +171,7 @@ func _spawn_player_at_entry(entered_from: int):
 		player.global_position = (marker as Node2D).global_position
 	else:
 		player.global_position = Vector2.ZERO
+
+	# блокируем двери на короткое время, чтобы не цепляло триггеры сразу
+	if player.has_method("lock_doors"):
+		player.lock_doors()

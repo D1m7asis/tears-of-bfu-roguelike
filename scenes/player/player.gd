@@ -2,38 +2,37 @@ extends CharacterBody2D
 
 @export var speed: float = 300.0
 
-# shooting
 @onready var bullet_scene: PackedScene = preload("res://scenes/player/bullet.tscn")
 @export var fire_cooldown: float = 0.3
 var can_shoot: bool = true
 @export var bullet_spawn_offset: float = 55.0
 
-# inventory
 @export var inventory_size: int = 12
-var inventory: Array[Dictionary] = [] # { "data": ItemData, "count": int }
+var inventory: Array[Dictionary] = []
 
-# restart hold
 @export var restart_hold_seconds: float = 3.0
 var restart_hold_time: float = 0.0
 @onready var restart_overlay = null
 
-# UI / states (LR6)
 @export var max_health: int = 5
 var health: int = 0
 @onready var hud = null
 
-@export var game_over_scene_path: String = "res://scenes/ui/game_over.tscn"
-@export var victory_scene_path: String = "res://scenes/ui/victory.tscn"
+@export var game_over_scene_path: String = "res://scenes/ui/GameOver.tscn"
+@export var victory_scene_path: String = "res://scenes/ui/Victory.tscn"
 
-func _ready():
+var door_lock_time: float = 0.0
+@export var door_lock_after_teleport: float = 0.25
+
+func _ready() -> void:
+	add_to_group("player")
+
 	health = max_health
-
 	restart_overlay = get_tree().get_first_node_in_group("restart_overlay")
 	hud = get_tree().get_first_node_in_group("hud")
-
 	_update_hud_all()
 
-func _physics_process(delta):
+func _physics_process(delta: float) -> void:
 	var direction := Vector2.ZERO
 
 	if Input.is_action_pressed("move_right"):
@@ -53,8 +52,12 @@ func _physics_process(delta):
 	velocity = direction * speed
 	move_and_slide()
 
-func _process(delta):
-	# pause toggle
+func _process(delta: float) -> void:
+	# обновляем анти-цепочку
+	if door_lock_time > 0.0:
+		door_lock_time -= delta
+
+	# pause
 	if Input.is_action_just_pressed("pause_game"):
 		get_tree().paused = not get_tree().paused
 
@@ -68,10 +71,9 @@ func _process(delta):
 	elif Input.is_action_just_pressed("shoot_down"):
 		shoot(Vector2.DOWN)
 
-	# hold-to-restart
+	# hold restart
 	if Input.is_action_pressed("restart_hold"):
 		restart_hold_time += delta
-
 		if restart_overlay != null:
 			restart_overlay.set_visible_active(true)
 			restart_overlay.set_progress(restart_hold_time / restart_hold_seconds)
@@ -80,12 +82,11 @@ func _process(delta):
 			get_tree().reload_current_scene()
 	else:
 		restart_hold_time = 0.0
-
 		if restart_overlay != null:
 			restart_overlay.set_visible_active(false)
 			restart_overlay.set_progress(0.0)
 
-func shoot(dir: Vector2):
+func shoot(dir: Vector2) -> void:
 	if not can_shoot:
 		return
 	can_shoot = false
@@ -99,15 +100,14 @@ func shoot(dir: Vector2):
 	await get_tree().create_timer(fire_cooldown).timeout
 	can_shoot = true
 
-# -----------------------
-# Inventory API
-# -----------------------
+# -------- inventory --------
 
 func add_item(item: ItemData, amount: int = 1) -> bool:
+	print(item)
+	
 	if item == null or amount <= 0:
 		return false
 
-	# stack into existing slot first
 	if item.stackable:
 		for slot in inventory:
 			if slot["data"].id == item.id and int(slot["count"]) < item.max_stack:
@@ -119,7 +119,6 @@ func add_item(item: ItemData, amount: int = 1) -> bool:
 					_update_hud_all()
 					return true
 
-	# add new slots
 	while amount > 0:
 		if inventory.size() >= inventory_size:
 			_update_hud_all()
@@ -177,53 +176,46 @@ func count_item_id(item_id: String) -> int:
 			total += int(slot["count"])
 	return total
 
-# -----------------------
-# Health / states
-# -----------------------
+# -------- health --------
 
-func take_damage(amount: int):
+func take_damage(amount: int) -> void:
 	health -= amount
-	modulate = Color(1, 0.5, 0.5)
-	await get_tree().create_timer(0.1).timeout
-	modulate = Color(1, 1, 1)
-	
 	if health < 0:
 		health = 0
-	
+
 	_update_hud_health()
 
 	if health <= 0:
 		die()
 
-func heal(amount: int):
-	health += amount
-	if health > max_health:
-		health = max_health
-	_update_hud_health()
-
-func die():
-	# можно сделать анимацию, но для ЛР6 достаточно перехода сцены
+func die() -> void:
 	if game_over_scene_path != "":
 		get_tree().change_scene_to_file(game_over_scene_path)
 	else:
 		get_tree().reload_current_scene()
 
-func win():
+func win() -> void:
 	if victory_scene_path != "":
 		get_tree().change_scene_to_file(victory_scene_path)
 
-# -----------------------
-# HUD helpers
-# -----------------------
+# -------- hud helpers --------
 
-func _update_hud_health():
+func _update_hud_health() -> void:
 	if hud != null and hud.has_method("update_health"):
 		hud.update_health(health)
 
-func _update_hud_keys():
+func _update_hud_keys() -> void:
 	if hud != null and hud.has_method("update_keys"):
 		hud.update_keys(count_item_id("key"))
 
-func _update_hud_all():
+func _update_hud_all() -> void:
 	_update_hud_health()
 	_update_hud_keys()
+
+# -------- door cooldown --------
+
+func lock_doors() -> void:
+	door_lock_time = door_lock_after_teleport
+
+func can_use_doors() -> bool:
+	return door_lock_time <= 0.0

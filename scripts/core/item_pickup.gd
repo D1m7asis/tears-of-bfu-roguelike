@@ -11,5 +11,6 @@ func _ready():
 func _on_body_entered(body):
 	if body.has_method("add_item"):
 		var ok: bool = body.add_item(item_data, amount)
+		
 		if ok:
 			queue_free()

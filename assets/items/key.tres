@@ -1,10 +1,13 @@
 [gd_resource type="Resource" script_class="ItemData" format=3 uid="uid://sssmhvho1726"]
 
 [ext_resource type="Script" uid="uid://ei4gbmaj8mi6" path="res://scripts/core/item_data.gd" id="1_42tpf"]
+[ext_resource type="Texture2D" uid="uid://hlk18gp2bhyc" path="res://assets/sprites/items/key.png" id="1_w4f0c"]
 
 [resource]
 script = ExtResource("1_42tpf")
 id = "key"
+display_name = "Ключ"
+icon = ExtResource("1_w4f0c")
 stackable = false
 max_stack = 1
 metadata/_custom_type_script = "uid://ei4gbmaj8mi6"

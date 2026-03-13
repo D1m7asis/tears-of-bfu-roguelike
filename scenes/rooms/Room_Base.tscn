@@ -1,9 +1,12 @@
 [gd_scene format=3 uid="uid://dwc2k6digm02y"]
 
 [ext_resource type="Script" uid="uid://wqt0s1xpd01l" path="res://scripts/core/room_base.gd" id="1_5wabu"]
+[ext_resource type="PackedScene" uid="uid://c2j7bnno174sx" path="res://scenes/ItemPickup.tscn" id="2_wkw30"]
 [ext_resource type="Texture2D" uid="uid://dplv68nlg47q4" path="res://assets/sprites/environment/floor.png" id="2_x8qha"]
 [ext_resource type="Texture2D" uid="uid://b8lc15kfwsxos" path="res://assets/sprites/environment/wall.png" id="3_wkw30"]
 [ext_resource type="PackedScene" uid="uid://cxp532p1tm6ic" path="res://scenes/rooms/Door.tscn" id="4_xqs35"]
+[ext_resource type="Resource" uid="uid://sssmhvho1726" path="res://assets/items/key.tres" id="6_wkw30"]
+[ext_resource type="PackedScene" uid="uid://cib3wh3lf8g5g" path="res://scenes/enemies/Enemy.tscn" id="7_xqs35"]
 
 [sub_resource type="Gradient" id="Gradient_ca18f"]
 colors = PackedColorArray(0.040984727, 0.0014341805, 0.06365898, 1, 0.016070971, 0.04371407, 0.058891274, 1)
@@ -8307,17 +8310,21 @@ shape = SubResource("RectangleShape2D_jo3sm")
 
 [node name="Door_N" parent="Doors" unique_id=703260234 instance=ExtResource("4_xqs35")]
 position = Vector2(2, -280)
+mode = 0
 
 [node name="Door_E" parent="Doors" unique_id=1206614679 instance=ExtResource("4_xqs35")]
 position = Vector2(517, -1)
+mode = 0
 dir = 1
 
 [node name="Door_S" parent="Doors" unique_id=107285211 instance=ExtResource("4_xqs35")]
 position = Vector2(1, 259)
+mode = 0
 dir = 2
 
 [node name="Door_W" parent="Doors" unique_id=1608728745 instance=ExtResource("4_xqs35")]
 position = Vector2(-524, 1)
+mode = 0
 dir = 3
 
 [node name="Spawns" type="Node" parent="." unique_id=259680325]
@@ -8333,3 +8340,12 @@ position = Vector2(2, 255)
 
 [node name="Spawn_W" type="Marker2D" parent="Spawns" unique_id=383418365]
 position = Vector2(-525, -2)
+
+[node name="ItemPickup" parent="." unique_id=817426506 instance=ExtResource("2_wkw30")]
+position = Vector2(-246, -117.99999)
+item_data = ExtResource("6_wkw30")
+
+[node name="Enemies" type="Node" parent="." unique_id=1936180586]
+
+[node name="Enemy6" parent="Enemies" unique_id=1985602731 instance=ExtResource("7_xqs35")]
+position = Vector2(-326, 189)

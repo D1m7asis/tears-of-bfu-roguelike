@@ -26,7 +26,9 @@ func _on_damage_area_body_entered(body):
 	if body.has_method("take_damage") and can_attack and health > 0:
 		can_attack = false
 		body.take_damage(damage)
-		await get_tree().create_timer(attack_cooldown).timeout
+		print("get_tree() 2", str(get_tree()))
+		if get_tree() != null:
+			await get_tree().create_timer(attack_cooldown).timeout
 		can_attack = true
 
 
