@@ -5,3 +5,8 @@
 [node name="EnemyGrunt" unique_id=1885194012 instance=ExtResource("1_base")]
 speed = 170.0
 attack_cooldown = 0.9
+attack_style = "shooter"
+projectile_cooldown = 1.5
+projectile_speed = 330.0
+projectile_range = 340.0
+preferred_distance = 215.0

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="chestWood" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#b56f31"/>
+      <stop offset="1" stop-color="#6f3f1d"/>
+    </linearGradient>
+    <linearGradient id="chestBand" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#f2d173"/>
+      <stop offset="1" stop-color="#9f7331"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="32" cy="51" rx="20" ry="6" fill="#000000" opacity="0.22"/>
+  <path d="M12 28c0-4 3-7 7-7h26c4 0 7 3 7 7v17c0 4-3 7-7 7H19c-4 0-7-3-7-7Z" fill="url(#chestWood)"/>
+  <path d="M14 27c0-7 8-13 18-13s18 6 18 13v6H14Z" fill="#905225"/>
+  <path d="M14 31h36v6H14z" fill="#4e2d16" opacity="0.55"/>
+  <path d="M20 19h24c6 0 10 3 10 8H10c0-5 4-8 10-8Z" fill="#d49b49"/>
+  <path d="M16 23h32c2 0 4 1 5 3H11c1-2 3-3 5-3Z" fill="#f0bf67" opacity="0.75"/>
+  <rect x="27" y="18" width="10" height="34" rx="2" fill="url(#chestBand)"/>
+  <rect x="12" y="32" width="40" height="4" rx="1" fill="url(#chestBand)"/>
+  <rect x="28" y="31" width="8" height="10" rx="2" fill="#3b2414"/>
+  <rect x="30" y="34" width="4" height="4" rx="1.2" fill="#d6b76d"/>
+  <path d="M18 39h8M38 39h8" stroke="#d9a257" stroke-width="2" stroke-linecap="round" opacity="0.75"/>
+  <path d="M18 45h8M38 45h8" stroke="#532d16" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+</svg>

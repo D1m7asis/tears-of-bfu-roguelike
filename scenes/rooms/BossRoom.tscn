@@ -7317,6 +7317,9 @@ position = Vector2(2, 255)
 [node name="Spawn_W" type="Marker2D" parent="Spawns" unique_id=383418365]
 position = Vector2(-525, -2)
 
+[node name="CenterSpawn" type="Marker2D" parent="Spawns"]
+position = Vector2(0, 0)
+
 [node name="Enemies" type="Node" parent="." unique_id=1936180586]
 
 [node name="BossSpawn" type="Marker2D" parent="."]

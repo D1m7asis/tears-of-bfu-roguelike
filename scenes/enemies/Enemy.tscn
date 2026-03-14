@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://brvg1f6wx6t8n" path="res://scripts/enemies/enemy.gd" id="1_hpe7p"]
 [ext_resource type="Texture2D" uid="uid://brhrn4fgum30m" path="res://assets/sprites/enemies/enemy.png" id="2_k7o7a"]
+[ext_resource type="PackedScene" path="res://scenes/ui/EnemyHealthBar.tscn" id="3_hpbar"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_8axbs"]
 size = Vector2(70, 106)
@@ -28,6 +29,8 @@ collision_mask = 19
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="DamageArea" unique_id=671415224]
 shape = SubResource("RectangleShape2D_73enu")
+
+[node name="EnemyHealthBar" parent="." instance=ExtResource("3_hpbar")]
 
 [connection signal="area_entered" from="DamageArea" to="." method="_on_damage_area_area_entered"]
 [connection signal="body_entered" from="DamageArea" to="." method="_on_damage_area_body_entered"]

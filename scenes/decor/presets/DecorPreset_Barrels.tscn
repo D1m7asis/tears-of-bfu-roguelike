@@ -1,0 +1,14 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/decor/props/DecorBarrel.tscn" id="1_barrel"]
+
+[node name="DecorPresetBarrels" type="Node2D"]
+
+[node name="BarrelA" parent="." instance=ExtResource("1_barrel")]
+position = Vector2(-220, 128)
+
+[node name="BarrelB" parent="." instance=ExtResource("1_barrel")]
+position = Vector2(-180, 146)
+
+[node name="BarrelC" parent="." instance=ExtResource("1_barrel")]
+position = Vector2(250, -132)

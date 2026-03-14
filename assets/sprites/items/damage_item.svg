@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="dmgGem" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#ff9ba0"/>
+      <stop offset="1" stop-color="#b41423"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="32" cy="52" rx="15" ry="5" fill="#000000" opacity="0.2"/>
+  <path d="M32 8 50 22 44 54 20 54 14 22Z" fill="#5f0d16"/>
+  <path d="M32 12 46 24 41 50 23 50 18 24Z" fill="url(#dmgGem)"/>
+  <path d="M32 12 38 24 32 50 26 24Z" fill="#ffd7d8" opacity="0.26"/>
+  <path d="M18 24h28" stroke="#8f101c" stroke-width="2"/>
+  <path d="M24 28 40 28 34 35 34 46 30 46 30 35Z" fill="#fff2c8"/>
+  <path d="M31 16h2v12h-2z" fill="#fff7e8" opacity="0.9"/>
+  <path d="M24 20 29 24 23 31" fill="none" stroke="#ffccd2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+</svg>

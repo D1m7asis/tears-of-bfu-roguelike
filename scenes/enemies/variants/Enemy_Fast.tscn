@@ -8,6 +8,11 @@ modulate = Color(0.88, 0.97, 1, 1)
 speed = 245.0
 attack_cooldown = 0.55
 max_health = 2
+attack_style = "jumper"
+leap_cooldown = 1.15
+leap_speed = 640.0
+leap_duration = 0.22
+leap_trigger_range = 250.0
 
 [node name="Sprite2D" parent="." index="0" unique_id=1535695315]
 scale = Vector2(0.09198114, 0.09198116)

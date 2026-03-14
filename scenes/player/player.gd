@@ -1,17 +1,22 @@
 extends CharacterBody2D
 
 const SfxLib = preload("res://scripts/core/sfx_library.gd")
+const RunStateLib = preload("res://scripts/core/run_state.gd")
 const PLAYER_BASE_TEXTURE = preload("res://assets/sprites/player/player.png")
 const PLAYER_NEO_TEXTURE = preload("res://assets/sprites/player/player_neo.png")
+const KEY_ITEM_DATA = preload("res://assets/items/key.tres")
+const ITEM_PICKUP_SCENE = preload("res://scenes/ItemPickup.tscn")
 
 @export var speed: float = 300.0
+@export var base_damage: int = 1
+@export var base_attack_speed: float = 3.33
 
 @onready var bullet_scene: PackedScene = preload("res://scenes/player/bullet.tscn")
-@export var fire_cooldown: float = 0.3
 var can_shoot: bool = true
 @export var bullet_spawn_offset: float = 55.0
 
 @export var inventory_size: int = 12
+@export var starting_keys: int = 3
 var inventory: Array[Dictionary] = []
 
 @export var restart_hold_seconds: float = 3.0
@@ -24,13 +29,17 @@ var restart_hold_time: float = 0.0
 @export var max_health: int = 5
 var health: int = 0
 @onready var hud = null
+var _max_health_bonus: int = 0
+var _damage_bonus: int = 0
+var _attack_speed_bonus: float = 0.0
+var collected_passive_items: Array[ItemData] = []
 
 @export var game_over_scene_path: String = "res://scenes/ui/GameOver.tscn"
 @export var victory_scene_path: String = "res://scenes/ui/Victory.tscn"
 @export var death_fade_duration: float = 0.5
 @export var death_hold_duration: float = 0.2
-@export var bullet_time_max_seconds: float = 5.0
-@export var bullet_time_kill_recharge_seconds: float = 1.0
+@export var bullet_time_max_seconds: float = 3.0
+@export var bullet_time_kill_recharge_seconds: float = 0.3
 @export var bullet_time_ramp_in_duration: float = 0.22
 @export var bullet_time_ramp_out_duration: float = 0.12
 @export var bullet_time_slowdown_power: float = 3.2
@@ -45,6 +54,21 @@ var is_bullet_time_active: bool = false
 var bullet_time_blend: float = 0.0
 var background_music = null
 var _base_sprite_scale: Vector2 = Vector2.ONE
+@export var pickup_hint_radius: float = 110.0
+var active_item: ItemData = null
+var active_item_cooldown_remaining: float = 0.0
+var _active_overdrive_bonus_damage: int = 0
+var _active_overdrive_bonus_ats: float = 0.0
+var _is_active_invulnerable: bool = false
+var _aegis_cast_id: int = 0
+var _berserk_cast_id: int = 0
+var _phase_cloak_cast_id: int = 0
+var _blood_pact_cast_id: int = 0
+var _iron_choir_cast_id: int = 0
+var _stasis_cast_id: int = 0
+var _speed_boost_cast_id: int = 0
+var _temporary_speed_bonus: float = 0.0
+var _damage_feedback_tween: Tween = null
 
 func _ready() -> void:
 	add_to_group("player")
@@ -53,6 +77,10 @@ func _ready() -> void:
 	if sprite != null:
 		_base_sprite_scale = sprite.scale
 	health = max_health
+	if RunStateLib.continue_run:
+		_import_run_state(RunStateLib.consume_player_state())
+	elif KEY_ITEM_DATA != null and starting_keys > 0:
+		add_item(KEY_ITEM_DATA, starting_keys)
 	bullet_time_charge = bullet_time_max_seconds
 	restart_overlay = get_tree().get_first_node_in_group("restart_overlay")
 	hud = get_tree().get_first_node_in_group("hud")
@@ -84,7 +112,7 @@ func _physics_process(_delta: float) -> void:
 		direction.y -= 1
 
 	direction = direction.normalized()
-	velocity = direction * speed
+	velocity = direction * (speed + _temporary_speed_bonus)
 	move_and_slide()
 
 func _process(delta: float) -> void:
@@ -97,6 +125,8 @@ func _process(delta: float) -> void:
 
 	if door_lock_time > 0.0:
 		door_lock_time -= delta
+	if active_item_cooldown_remaining > 0.0:
+		active_item_cooldown_remaining = maxf(0.0, active_item_cooldown_remaining - delta)
 
 	if Input.is_action_pressed("bullet_time") and bullet_time_charge > 0.0:
 		_set_bullet_time_active(true)
@@ -110,14 +140,11 @@ func _process(delta: float) -> void:
 
 	_update_bullet_time_blend(delta)
 
-	if Input.is_action_just_pressed("shoot_right"):
-		shoot(Vector2.RIGHT)
-	elif Input.is_action_just_pressed("shoot_left"):
-		shoot(Vector2.LEFT)
-	elif Input.is_action_just_pressed("shoot_up"):
-		shoot(Vector2.UP)
-	elif Input.is_action_just_pressed("shoot_down"):
-		shoot(Vector2.DOWN)
+	var shoot_direction := _get_held_shoot_direction()
+	if shoot_direction != Vector2.ZERO:
+		shoot(shoot_direction)
+	if Input.is_action_just_pressed("active_item"):
+		use_active_item()
 
 	if Input.is_action_pressed("restart_hold"):
 		restart_hold_time += delta
@@ -126,6 +153,7 @@ func _process(delta: float) -> void:
 			restart_overlay.set_progress(restart_hold_time / restart_hold_seconds)
 
 		if restart_hold_time >= restart_hold_seconds:
+			RunStateLib.reset_run()
 			get_tree().reload_current_scene()
 	else:
 		restart_hold_time = 0.0
@@ -134,6 +162,8 @@ func _process(delta: float) -> void:
 			restart_overlay.set_progress(0.0)
 
 	_update_hud_bullet_time()
+	_update_hud_active_item()
+	_update_pickup_hint()
 
 func shoot(dir: Vector2) -> void:
 	if is_dying or is_room_transitioning or not can_shoot:
@@ -143,18 +173,39 @@ func shoot(dir: Vector2) -> void:
 	var bullet = bullet_scene.instantiate()
 	bullet.global_position = global_position + dir * bullet_spawn_offset
 	bullet.direction = dir
+	bullet.damage = get_damage_per_shot()
 	bullet.add_to_group("bullet")
 	get_tree().current_scene.add_child(bullet)
 	SfxLib.play_shoot(self)
 
-	await get_tree().create_timer(fire_cooldown).timeout
+	await get_tree().create_timer(get_fire_cooldown_current()).timeout
 	can_shoot = true
+
+func _get_held_shoot_direction() -> Vector2:
+	if Input.is_action_pressed("shoot_right"):
+		return Vector2.RIGHT
+	if Input.is_action_pressed("shoot_left"):
+		return Vector2.LEFT
+	if Input.is_action_pressed("shoot_up"):
+		return Vector2.UP
+	if Input.is_action_pressed("shoot_down"):
+		return Vector2.DOWN
+	return Vector2.ZERO
 
 func add_item(item: ItemData, amount: int = 1) -> bool:
 	if item == null or amount <= 0:
 		return false
 	if item.pickup_kind == "heal":
 		return heal(item.heal_amount * amount)
+	if item.pickup_kind == "active_item":
+		set_active_item(item)
+		return true
+	if item.pickup_kind == "passive_item":
+		var added_any := false
+		for _i in range(amount):
+			apply_passive_item(item)
+			added_any = true
+		return added_any
 
 	if item.stackable:
 		for slot in inventory:
@@ -225,13 +276,15 @@ func count_item_id(item_id: String) -> int:
 	return total
 
 func take_damage(amount: int) -> void:
-	if is_dying:
+	if is_dying or _is_active_invulnerable:
 		return
 
 	health -= amount
 	if health < 0:
 		health = 0
 
+	SfxLib.play_player_hurt(self)
+	_play_damage_feedback()
 	_update_hud_health()
 
 	if health <= 0:
@@ -253,6 +306,298 @@ func get_health() -> int:
 
 func get_max_health() -> int:
 	return max_health
+
+func get_damage_per_shot() -> int:
+	return max(1, base_damage + _damage_bonus + _active_overdrive_bonus_damage)
+
+func get_fire_cooldown_current() -> float:
+	return 1.0 / get_attack_speed_current()
+
+func get_attack_speed_current() -> float:
+	return maxf(0.75, base_attack_speed + _attack_speed_bonus + _active_overdrive_bonus_ats)
+
+func get_current_stats() -> Dictionary:
+	return {
+		"damage": get_damage_per_shot(),
+		"attack_speed": get_attack_speed_current(),
+		"max_health": max_health,
+	}
+
+func set_active_item(item: ItemData) -> void:
+	if item == null:
+		return
+	if active_item != null and active_item != item:
+		_drop_active_item_on_floor(active_item)
+	active_item = item
+	active_item_cooldown_remaining = 0.0
+	_update_hud_all()
+	if hud != null and hud.has_method("show_passive_item_card"):
+		hud.show_passive_item_card(item)
+
+func use_active_item() -> void:
+	if active_item == null or active_item_cooldown_remaining > 0.0 or is_room_transitioning or is_dying:
+		return
+
+	match active_item.active_kind:
+		"judgement":
+			_active_judgement()
+		"red_nova":
+			_active_red_nova()
+		"time_flask":
+			_active_time_flask()
+		"aegis_sigil":
+			_active_aegis_sigil()
+		"berserk_engine":
+			_active_berserk_engine()
+		"meteor_bell":
+			_active_meteor_bell()
+		"mirror_fan":
+			_active_mirror_fan()
+		"chrono_surge":
+			_active_chrono_surge()
+		"phase_cloak":
+			_active_phase_cloak()
+		"execution_order":
+			_active_execution_order()
+		"rail_hymn":
+			_active_rail_hymn()
+		"blood_pact":
+			_active_blood_pact()
+		"iron_choir":
+			_active_iron_choir()
+		"stasis_mine":
+			_active_stasis_mine()
+		"soul_lantern":
+			_active_soul_lantern()
+		_:
+			return
+
+	active_item_cooldown_remaining = maxf(active_item.active_cooldown_seconds, 0.1)
+	_update_hud_all()
+
+func _active_judgement() -> void:
+	_damage_all_enemies(999999)
+
+func _active_red_nova() -> void:
+	for index in range(16):
+		var angle := TAU * float(index) / 16.0
+		_spawn_bullet(Vector2.RIGHT.rotated(angle))
+
+func _active_time_flask() -> void:
+	bullet_time_charge = bullet_time_max_seconds
+	_update_hud_bullet_time()
+
+func _active_aegis_sigil() -> void:
+	_aegis_cast_id += 1
+	_is_active_invulnerable = true
+	modulate = Color(0.72, 0.95, 1.0, 1.0)
+	call_deferred("_end_aegis_after_delay", _aegis_cast_id)
+
+func _end_aegis_after_delay(cast_id: int) -> void:
+	await get_tree().create_timer(4.0).timeout
+	if cast_id != _aegis_cast_id:
+		return
+	_is_active_invulnerable = false
+	modulate = Color.WHITE
+
+func _active_berserk_engine() -> void:
+	_berserk_cast_id += 1
+	_active_overdrive_bonus_damage += 2
+	_active_overdrive_bonus_ats += 2.0
+	_update_hud_all()
+	call_deferred("_end_berserk_after_delay", _berserk_cast_id)
+
+func _end_berserk_after_delay(cast_id: int) -> void:
+	await get_tree().create_timer(8.0).timeout
+	if cast_id != _berserk_cast_id:
+		return
+	_active_overdrive_bonus_damage = max(0, _active_overdrive_bonus_damage - 2)
+	_active_overdrive_bonus_ats = maxf(0.0, _active_overdrive_bonus_ats - 2.0)
+	_update_hud_all()
+
+func _active_meteor_bell() -> void:
+	_damage_all_enemies(8)
+
+func _active_mirror_fan() -> void:
+	_spawn_burst(24, 1.0, 1.0)
+
+func _active_chrono_surge() -> void:
+	bullet_time_charge = bullet_time_max_seconds
+	_set_bullet_time_active(true)
+	_update_hud_bullet_time()
+
+func _active_phase_cloak() -> void:
+	_phase_cloak_cast_id += 1
+	_apply_temporary_invulnerability(2.6, _phase_cloak_cast_id, "_end_phase_cloak")
+	_apply_temporary_speed_boost(150.0, 2.6)
+	modulate = Color(0.72, 0.88, 1.0, 1.0)
+
+func _end_phase_cloak(cast_id: int) -> void:
+	await get_tree().create_timer(2.6).timeout
+	if cast_id != _phase_cloak_cast_id:
+		return
+	_is_active_invulnerable = false
+	modulate = Color.WHITE
+
+func _active_execution_order() -> void:
+	for enemy in _get_current_room_enemies():
+		var enemy_max_health: int = 1
+		var enemy_health: int = 1
+		if "max_health" in enemy:
+			enemy_max_health = int(enemy.get("max_health"))
+		if "health" in enemy:
+			enemy_health = int(enemy.get("health"))
+		if enemy_health <= int(ceil(float(enemy_max_health) * 0.5)):
+			if enemy.has_method("take_damage"):
+				enemy.take_damage(999999)
+		elif enemy.has_method("take_damage"):
+			enemy.take_damage(5)
+
+func _active_rail_hymn() -> void:
+	var dirs := [
+		Vector2.RIGHT, Vector2.LEFT, Vector2.UP, Vector2.DOWN,
+		Vector2(1, 1).normalized(), Vector2(-1, 1).normalized(),
+		Vector2(1, -1).normalized(), Vector2(-1, -1).normalized()
+	]
+	for dir in dirs:
+		_spawn_custom_bullet(dir, get_damage_per_shot() * 3, 780.0)
+
+func _active_blood_pact() -> void:
+	if health > 1:
+		health -= 1
+		_update_hud_health()
+	_blood_pact_cast_id += 1
+	_apply_temporary_overdrive(5, 2.5, _blood_pact_cast_id, "_end_blood_pact")
+	bullet_time_charge = minf(bullet_time_max_seconds, bullet_time_charge + 1.4)
+	_update_hud_bullet_time()
+
+func _end_blood_pact(cast_id: int) -> void:
+	await get_tree().create_timer(12.0).timeout
+	if cast_id != _blood_pact_cast_id:
+		return
+	_active_overdrive_bonus_damage = max(0, _active_overdrive_bonus_damage - 5)
+	_active_overdrive_bonus_ats = maxf(0.0, _active_overdrive_bonus_ats - 2.5)
+	_update_hud_all()
+
+func _active_iron_choir() -> void:
+	heal(2)
+	_iron_choir_cast_id += 1
+	_apply_temporary_invulnerability(1.8, _iron_choir_cast_id, "_end_iron_choir")
+	modulate = Color(1.0, 0.92, 0.72, 1.0)
+
+func _end_iron_choir(cast_id: int) -> void:
+	await get_tree().create_timer(1.8).timeout
+	if cast_id != _iron_choir_cast_id:
+		return
+	_is_active_invulnerable = false
+	modulate = Color.WHITE
+
+func _active_stasis_mine() -> void:
+	_stasis_cast_id += 1
+	for enemy in _get_current_room_enemies():
+		if enemy.has_method("set_active"):
+			enemy.set_active(false)
+		if enemy.has_method("take_damage"):
+			enemy.take_damage(2)
+	call_deferred("_end_stasis_mine", _stasis_cast_id)
+
+func _end_stasis_mine(cast_id: int) -> void:
+	await get_tree().create_timer(2.6).timeout
+	if cast_id != _stasis_cast_id:
+		return
+	for enemy in _get_current_room_enemies():
+		if enemy.has_method("set_active"):
+			enemy.set_active(true)
+
+func _active_soul_lantern() -> void:
+	heal(1)
+	bullet_time_charge = minf(bullet_time_max_seconds, bullet_time_charge + 1.0)
+	_update_hud_bullet_time()
+	_spawn_burst(12, 1.0, 1.6)
+
+func get_active_item_name() -> String:
+	return "" if active_item == null else active_item.display_name
+
+func _damage_all_enemies(amount: int) -> void:
+	for enemy in _get_current_room_enemies():
+		if enemy.has_method("take_damage"):
+			enemy.take_damage(amount)
+
+func _spawn_burst(count: int, damage_multiplier: float = 1.0, speed_multiplier: float = 1.0) -> void:
+	for index in range(count):
+		var angle := TAU * float(index) / float(count)
+		_spawn_custom_bullet(Vector2.RIGHT.rotated(angle), max(1, int(round(get_damage_per_shot() * damage_multiplier))), 600.0 * speed_multiplier)
+
+func _spawn_custom_bullet(dir: Vector2, custom_damage: int, custom_speed: float) -> void:
+	if bullet_scene == null:
+		return
+	var bullet = bullet_scene.instantiate()
+	if bullet == null:
+		return
+	bullet.global_position = global_position + dir.normalized() * bullet_spawn_offset
+	bullet.direction = dir.normalized()
+	bullet.damage = custom_damage
+	bullet.speed = custom_speed
+	bullet.add_to_group("bullet")
+	get_tree().current_scene.add_child(bullet)
+
+func _apply_temporary_invulnerability(_duration: float, cast_id: int, callback_name: String) -> void:
+	_is_active_invulnerable = true
+	call_deferred(callback_name, cast_id)
+
+func _apply_temporary_overdrive(damage_bonus: int, ats_bonus: float, cast_id: int, callback_name: String) -> void:
+	_active_overdrive_bonus_damage += damage_bonus
+	_active_overdrive_bonus_ats += ats_bonus
+	_update_hud_all()
+	call_deferred(callback_name, cast_id)
+
+func _apply_temporary_speed_boost(speed_bonus: float, duration: float) -> void:
+	_speed_boost_cast_id += 1
+	_temporary_speed_bonus += speed_bonus
+	call_deferred("_end_speed_boost", _speed_boost_cast_id, speed_bonus, duration)
+
+func _end_speed_boost(cast_id: int, speed_bonus: float, duration: float) -> void:
+	await get_tree().create_timer(duration).timeout
+	if cast_id != _speed_boost_cast_id:
+		return
+	_temporary_speed_bonus = maxf(0.0, _temporary_speed_bonus - speed_bonus)
+
+func _get_current_room_enemies() -> Array:
+	var result: Array = []
+	var room_manager := get_tree().get_first_node_in_group("room_manager")
+	if room_manager == null:
+		return result
+	var room: Node = room_manager.get("current_room_instance") as Node
+	if room == null:
+		return result
+	var enemies_root: Node = room.get_node_or_null("Enemies") as Node
+	if enemies_root == null:
+		return result
+	for child in enemies_root.get_children():
+		if child == null or child.get("is_dead") == true:
+			continue
+		result.append(child)
+	return result
+
+func apply_passive_item(item: ItemData) -> void:
+	if item == null:
+		return
+
+	collected_passive_items.append(item)
+	_damage_bonus += item.damage_delta
+	_attack_speed_bonus += item.attack_speed_delta
+
+	var old_max_health := max_health
+	_max_health_bonus += item.max_health_delta
+	max_health = max(1, old_max_health + item.max_health_delta)
+	if item.max_health_delta > 0:
+		health = min(max_health, health + item.max_health_delta)
+	else:
+		health = min(health, max_health)
+
+	_update_hud_all()
+	if hud != null and hud.has_method("show_passive_item_card"):
+		hud.show_passive_item_card(item)
 
 func die() -> void:
 	if is_dying:
@@ -281,8 +626,26 @@ func die() -> void:
 		get_tree().reload_current_scene()
 
 func win() -> void:
-	if victory_scene_path != "":
-		get_tree().change_scene_to_file(victory_scene_path)
+	var run_state := _export_run_state()
+	RunStateLib.advance_to_next_floor(run_state)
+	call_deferred("_go_to_next_floor")
+
+func win_at_hatch(hatch_global_position: Vector2) -> void:
+	is_room_transitioning = true
+	can_shoot = false
+	velocity = Vector2.ZERO
+	_set_bullet_time_active(false)
+	if hud != null and hud.has_method("play_cinematic_banner"):
+		hud.play_cinematic_banner("DESCENDING...", 0.42)
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_SINE)
+	tween.set_ease(Tween.EASE_IN)
+	tween.parallel().tween_property(self, "global_position", hatch_global_position, 0.34)
+	tween.parallel().tween_property(self, "scale", Vector2(0.12, 0.12), 0.34)
+	if camera != null:
+		tween.parallel().tween_property(camera, "zoom", Vector2(1.16, 1.16), 0.34)
+	await tween.finished
+	win()
 
 func _update_hud_health() -> void:
 	if hud != null and hud.has_method("update_health"):
@@ -296,6 +659,140 @@ func _update_hud_all() -> void:
 	_update_hud_health()
 	_update_hud_keys()
 	_update_hud_bullet_time()
+	_update_hud_stats()
+	_update_hud_active_item()
+
+func _update_hud_stats() -> void:
+	if hud != null and hud.has_method("update_player_stats"):
+		hud.update_player_stats(get_current_stats())
+	if hud != null and hud.has_method("update_collected_items"):
+		hud.update_collected_items(collected_passive_items)
+
+func _update_hud_active_item() -> void:
+	if hud != null and hud.has_method("update_active_item"):
+		hud.update_active_item(active_item, active_item_cooldown_remaining)
+
+func _update_pickup_hint() -> void:
+	if hud == null or not hud.has_method("set_pickup_hint"):
+		return
+	if get_tree() == null:
+		return
+
+	var nearest_hint := ""
+	var nearest_distance_sq := pickup_hint_radius * pickup_hint_radius
+	for node in get_tree().get_nodes_in_group("floor_pickup"):
+		if not (node is Node2D):
+			continue
+		if not node.has_method("get_interaction_hint"):
+			continue
+		var hint := str(node.call("get_interaction_hint"))
+		if hint == "":
+			continue
+		var distance_sq := global_position.distance_squared_to((node as Node2D).global_position)
+		if distance_sq > nearest_distance_sq:
+			continue
+		nearest_distance_sq = distance_sq
+		nearest_hint = hint
+
+	hud.set_pickup_hint(nearest_hint)
+
+func _go_to_next_floor() -> void:
+	if hud != null and hud.has_method("play_cinematic_banner"):
+		await hud.play_cinematic_banner("BASEMENT %d" % [RunStateLib.floor_index], 1.6)
+	_resolve_screen_fader()
+	if screen_fader != null and screen_fader.has_method("fade_to_black"):
+		await screen_fader.fade_to_black(0.55)
+	get_tree().change_scene_to_file("res://scenes/Game.tscn")
+
+func play_boss_room_intro() -> void:
+	is_room_transitioning = true
+	velocity = Vector2.ZERO
+	_resolve_screen_fader()
+	if screen_fader != null and screen_fader.has_method("set_black_instant"):
+		screen_fader.set_black_instant(0.38)
+	if hud != null and hud.has_method("play_cinematic_banner"):
+		hud.play_cinematic_banner("THE BOSS AWAITS", 1.15)
+	if screen_fader != null and screen_fader.has_method("fade_from_black"):
+		await screen_fader.fade_from_black(0.32)
+	if camera != null:
+		_stop_room_transition_tween()
+		room_transition_tween = create_tween()
+		room_transition_tween.set_trans(Tween.TRANS_SINE)
+		room_transition_tween.set_ease(Tween.EASE_OUT)
+		room_transition_tween.parallel().tween_property(camera, "zoom", Vector2(1.14, 1.14), 0.28)
+		room_transition_tween.parallel().tween_property(camera, "offset", Vector2(0, -18), 0.28)
+		await room_transition_tween.finished
+		room_transition_tween = create_tween()
+		room_transition_tween.set_trans(Tween.TRANS_SINE)
+		room_transition_tween.set_ease(Tween.EASE_IN_OUT)
+		room_transition_tween.parallel().tween_property(camera, "zoom", Vector2.ONE, 0.34)
+		room_transition_tween.parallel().tween_property(camera, "offset", Vector2.ZERO, 0.34)
+		await room_transition_tween.finished
+	is_room_transitioning = false
+
+func play_floor_spawn_intro(floor_number: int) -> void:
+	is_room_transitioning = true
+	velocity = Vector2.ZERO
+	_resolve_screen_fader()
+	if screen_fader != null and screen_fader.has_method("set_black_instant"):
+		screen_fader.set_black_instant(1.0)
+	if hud != null and hud.has_method("play_cinematic_banner"):
+		await hud.play_cinematic_banner("BASEMENT %d" % [floor_number], 2.9)
+	if screen_fader != null and screen_fader.has_method("fade_from_black"):
+		await screen_fader.fade_from_black(0.95)
+	if camera != null:
+		camera.zoom = Vector2(1.16, 1.16)
+		var tween := create_tween()
+		tween.set_trans(Tween.TRANS_SINE)
+		tween.set_ease(Tween.EASE_OUT)
+		tween.tween_property(camera, "zoom", Vector2.ONE, 0.75)
+		await tween.finished
+	is_room_transitioning = false
+
+func _export_run_state() -> Dictionary:
+	var passive_paths: Array[String] = []
+	for item in collected_passive_items:
+		if item != null and item.resource_path != "":
+			passive_paths.append(item.resource_path)
+
+	return {
+		"health": health,
+		"max_health": max_health,
+		"damage_bonus": _damage_bonus,
+		"attack_speed_bonus": _attack_speed_bonus,
+		"passive_paths": passive_paths,
+		"keys": count_item_id("key"),
+		"bullet_time_charge": bullet_time_charge,
+		"active_item_path": "" if active_item == null else active_item.resource_path,
+		"active_item_cooldown_remaining": active_item_cooldown_remaining,
+	}
+
+func _import_run_state(state: Dictionary) -> void:
+	inventory.clear()
+	collected_passive_items.clear()
+	_damage_bonus = int(state.get("damage_bonus", 0))
+	_attack_speed_bonus = float(state.get("attack_speed_bonus", 0.0))
+	max_health = int(state.get("max_health", max_health))
+	health = min(int(state.get("health", max_health)), max_health)
+	bullet_time_charge = float(state.get("bullet_time_charge", bullet_time_max_seconds))
+	active_item_cooldown_remaining = float(state.get("active_item_cooldown_remaining", 0.0))
+
+	var passive_paths: Array = state.get("passive_paths", [])
+	for path_variant in passive_paths:
+		var path := str(path_variant)
+		if path == "":
+			continue
+		var item := load(path) as ItemData
+		if item != null:
+			collected_passive_items.append(item)
+
+	var active_item_path := str(state.get("active_item_path", ""))
+	if active_item_path != "":
+		active_item = load(active_item_path) as ItemData
+
+	var keys := int(state.get("keys", starting_keys))
+	if KEY_ITEM_DATA != null and keys > 0:
+		add_item(KEY_ITEM_DATA, keys)
 
 func lock_doors() -> void:
 	door_lock_time = door_lock_after_teleport
@@ -324,7 +821,7 @@ func end_room_transition() -> void:
 	is_room_transitioning = false
 	velocity = Vector2.ZERO
 
-func play_room_arrival_effect(entered_from: int) -> void:
+func play_room_arrival_effect(_entered_from: int) -> void:
 	if camera == null:
 		return
 
@@ -428,3 +925,46 @@ func _scaled_sprite_size_for(texture: Texture2D) -> Vector2:
 		_base_sprite_scale.x * float(base_size.x) / float(texture_size.x),
 		_base_sprite_scale.y * float(base_size.y) / float(texture_size.y)
 	)
+
+func _drop_active_item_on_floor(item: ItemData) -> void:
+	if item == null or ITEM_PICKUP_SCENE == null or get_tree() == null:
+		return
+	var pickup := ITEM_PICKUP_SCENE.instantiate()
+	if pickup == null:
+		return
+	pickup.set("item_data", item)
+	pickup.set("amount", 1)
+	if pickup.has_method("prepare_spawn_protection"):
+		pickup.call("prepare_spawn_protection", 0.12, true)
+	var drop_offset := Vector2(36, -10)
+	var current_scene := get_tree().current_scene
+	if current_scene != null:
+		current_scene.call_deferred("add_child", pickup)
+		if pickup is Node2D:
+			(pickup as Node2D).set_deferred("global_position", global_position + drop_offset)
+
+func _play_damage_feedback() -> void:
+	if sprite == null:
+		return
+	if _damage_feedback_tween != null:
+		_damage_feedback_tween.kill()
+	_damage_feedback_tween = create_tween()
+	sprite.modulate = Color(1.0, 0.35, 0.35, 1.0)
+	_damage_feedback_tween.set_trans(Tween.TRANS_SINE)
+	_damage_feedback_tween.set_ease(Tween.EASE_OUT)
+	_damage_feedback_tween.parallel().tween_property(sprite, "modulate", Color.WHITE, 0.16)
+	if camera != null:
+		camera.offset += Vector2(10, -6)
+		_damage_feedback_tween.parallel().tween_property(camera, "offset", Vector2.ZERO, 0.18)
+
+func _spawn_bullet(dir: Vector2) -> void:
+	if bullet_scene == null:
+		return
+	var bullet = bullet_scene.instantiate()
+	if bullet == null:
+		return
+	bullet.global_position = global_position + dir.normalized() * bullet_spawn_offset
+	bullet.direction = dir.normalized()
+	bullet.damage = get_damage_per_shot()
+	bullet.add_to_group("bullet")
+	get_tree().current_scene.add_child(bullet)

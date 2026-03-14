@@ -1,0 +1,44 @@
+[gd_scene format=3 uid="uid://cuat6pgftjvby"]
+
+[ext_resource type="PackedScene" path="res://scenes/decor/props/DecorRock.tscn" id="1_rock"]
+
+[node name="DecorPresetRocks" type="Node2D" unique_id=448488761]
+
+[node name="RockA" parent="." unique_id=2145592238 instance=ExtResource("1_rock")]
+position = Vector2(-222.99998, -131)
+rotation = 0.17278759
+
+[node name="RockA" parent="RockA" unique_id=1871150301 instance=ExtResource("1_rock")]
+position = Vector2(31, 0)
+rotation = 0.17278759
+
+[node name="RockA" parent="RockA/RockA" unique_id=197241155 instance=ExtResource("1_rock")]
+position = Vector2(31, 0)
+rotation = 0.17278759
+
+[node name="RockA" parent="RockA/RockA/RockA" unique_id=510166634 instance=ExtResource("1_rock")]
+position = Vector2(31, 0)
+rotation = 0.17278759
+
+[node name="RockA" parent="RockA/RockA/RockA/RockA" unique_id=54907777 instance=ExtResource("1_rock")]
+position = Vector2(31, 0)
+rotation = 0.17278759
+
+[node name="RockB" parent="." unique_id=1914950922 instance=ExtResource("1_rock")]
+position = Vector2(230, 120)
+rotation = 0.17278759
+
+[node name="RockB" parent="RockB" unique_id=362325841 instance=ExtResource("1_rock")]
+position = Vector2(-1, -40)
+rotation = 0.17278759
+
+[node name="RockB2" parent="RockB" unique_id=480291496 instance=ExtResource("1_rock")]
+position = Vector2(-2, -81)
+rotation = 0.17278759
+
+[node name="RockB" parent="RockB/RockB2" unique_id=1140786373 instance=ExtResource("1_rock")]
+position = Vector2(-1, -40)
+rotation = 0.17278759
+
+[node name="RockC" parent="." unique_id=220772027 instance=ExtResource("1_rock")]
+position = Vector2(104, -81)

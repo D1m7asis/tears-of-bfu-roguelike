@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/core/item_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/items/firerate_item.svg" id="2_icon"]
+
+[resource]
+script = ExtResource("1_script")
+id = "stasis_mine"
+display_name = "Stasis Mine"
+icon = ExtResource("2_icon")
+stackable = false
+max_stack = 1
+pickup_kind = "active_item"
+display_lines = PackedStringArray("Stuns the whole room for 2.6s", "Deals 2 on trigger", "Cooldown 30s")
+active_kind = "stasis_mine"
+active_cooldown_seconds = 30.0

@@ -34,17 +34,17 @@ func _draw() -> void:
 		_draw_heart(heart_rect, texture_size, fill_units)
 
 
-func _draw_heart(draw_rect: Rect2, texture_size: Vector2, fill_units: int) -> void:
-	draw_texture_rect(HEART_TEXTURE, draw_rect, false, EMPTY_COLOR)
+func _draw_heart(heart_rect: Rect2, texture_size: Vector2, fill_units: int) -> void:
+	draw_texture_rect(HEART_TEXTURE, heart_rect, false, EMPTY_COLOR)
 
 	if fill_units <= 0:
 		return
 
 	if fill_units >= 2:
-		draw_texture_rect(HEART_TEXTURE, draw_rect, false, FULL_COLOR)
+		draw_texture_rect(HEART_TEXTURE, heart_rect, false, FULL_COLOR)
 		return
 
-	var left_half_rect := Rect2(draw_rect.position, Vector2(draw_rect.size.x * 0.5, draw_rect.size.y))
+	var left_half_rect := Rect2(heart_rect.position, Vector2(heart_rect.size.x * 0.5, heart_rect.size.y))
 	var left_half_region := Rect2(Vector2.ZERO, Vector2(texture_size.x * 0.5, texture_size.y))
 	draw_texture_rect_region(HEART_TEXTURE, left_half_rect, left_half_region, FULL_COLOR, false)
 

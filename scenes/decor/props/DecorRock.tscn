@@ -1,0 +1,26 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/core/decor_prop.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/environment/rock.svg" id="2_tex"]
+[ext_resource type="Texture2D" path="res://assets/sprites/environment/ground_shadow.svg" id="3_shadow"]
+
+[sub_resource type="CircleShape2D" id="1_shape"]
+radius = 20.0
+
+[node name="DecorRock" type="StaticBody2D"]
+script = ExtResource("1_script")
+blocks_movement = true
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, 18)
+scale = Vector2(1.15, 0.92)
+modulate = Color(1, 1, 1, 0.88)
+texture = ExtResource("3_shadow")
+z_index = -1
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.08, 1.08)
+texture = ExtResource("2_tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("1_shape")

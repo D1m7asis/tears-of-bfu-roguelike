@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="openWood" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#b87539"/>
+      <stop offset="1" stop-color="#6c3b1a"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#fff1a3"/>
+      <stop offset="1" stop-color="#ffcf63"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="32" cy="52" rx="20" ry="6" fill="#000000" opacity="0.18"/>
+  <path d="M12 31c0-4 3-7 7-7h26c4 0 7 3 7 7v14c0 4-3 7-7 7H19c-4 0-7-3-7-7Z" fill="url(#openWood)"/>
+  <path d="M12 31h40v5H12z" fill="#e0b964"/>
+  <rect x="27" y="23" width="10" height="29" rx="2" fill="#d8b15e"/>
+  <path d="M16 26 22 14h20l6 12" fill="#8e4f25"/>
+  <path d="M18 25 23 17h18l5 8" fill="#c98749"/>
+  <path d="M24 19h16" stroke="#f9dfa0" stroke-width="2" opacity="0.65"/>
+  <path d="M25 25c2-4 4-6 7-6s5 2 7 6v9H25Z" fill="#3a2413"/>
+  <path d="M20 14 16 7M28 12 27 4M36 12 37 4M44 14 48 7" stroke="url(#glow)" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="32" cy="25" r="3" fill="#fff3b5" opacity="0.9"/>
+</svg>

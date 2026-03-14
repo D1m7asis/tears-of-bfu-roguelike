@@ -1,0 +1,21 @@
+[gd_scene format=3]
+
+[node name="EnemyPresetLanes" type="Node2D"]
+
+[node name="SlotA" type="Marker2D" parent="."]
+position = Vector2(-260, -150)
+
+[node name="SlotB" type="Marker2D" parent="."]
+position = Vector2(-260, 150)
+
+[node name="SlotC" type="Marker2D" parent="."]
+position = Vector2(0, -70)
+
+[node name="SlotD" type="Marker2D" parent="."]
+position = Vector2(0, 70)
+
+[node name="SlotE" type="Marker2D" parent="."]
+position = Vector2(260, -150)
+
+[node name="SlotF" type="Marker2D" parent="."]
+position = Vector2(260, 150)

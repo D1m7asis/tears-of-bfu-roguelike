@@ -1,6 +1,8 @@
 extends RefCounted
 class_name SfxLibrary
 
+const SettingsStoreLib = preload("res://scripts/core/settings_store.gd")
+
 const SHOOT_PATHS := [
 	"res://assets/audio/sfx/shoot.wav",
 	"res://assets/audio/sfx/shoot.ogg",
@@ -13,14 +15,53 @@ const ENEMY_DEATH_PATHS := [
 	"res://assets/audio/sfx/enemy_die.mp3",
 ]
 
+const KEY_PICKUP_PATHS := [
+	"res://assets/audio/sfx/key_pickup.wav",
+	"res://assets/audio/sfx/key_pickup.ogg",
+	"res://assets/audio/sfx/key_pickup.mp3",
+]
+
+const HEART_PICKUP_PATHS := [
+	"res://assets/audio/sfx/heart_pickup.wav",
+	"res://assets/audio/sfx/heart_pickup.ogg",
+	"res://assets/audio/sfx/heart_pickup.mp3",
+]
+
+const PASSIVE_PICKUP_PATHS := [
+	"res://assets/audio/sfx/passive_pickup.wav",
+	"res://assets/audio/sfx/passive_pickup.ogg",
+	"res://assets/audio/sfx/passive_pickup.mp3",
+]
+
+const PLAYER_HURT_PATHS := [
+	"res://assets/audio/sfx/player_hurt.wav",
+	"res://assets/audio/sfx/player_hurt.ogg",
+	"res://assets/audio/sfx/player_hurt.mp3",
+]
+
 static var _stream_cache: Dictionary = {}
-static var _sfx_volume_percent: float = 75.0
+static var _sfx_volume_percent: float = SettingsStoreLib.get_sfx_volume_percent()
 
 static func play_shoot(source: Node, volume_db: float = -4.5) -> void:
 	_play(source, "shoot", volume_db)
 
 static func play_enemy_death(source: Node, volume_db: float = -3.5) -> void:
 	_play(source, "enemy_death", volume_db)
+
+static func play_item_pickup(source: Node, item_data: ItemData, volume_db: float = -5.5) -> void:
+	if item_data == null:
+		_play(source, "passive_pickup", volume_db)
+		return
+	if item_data.id == "key":
+		_play(source, "key_pickup", volume_db)
+		return
+	if item_data.id == "heart" or item_data.pickup_kind == "heal":
+		_play(source, "heart_pickup", volume_db)
+		return
+	_play(source, "passive_pickup", volume_db)
+
+static func play_player_hurt(source: Node, volume_db: float = -4.0) -> void:
+	_play(source, "player_hurt", volume_db)
 
 static func _play(source: Node, kind: String, volume_db: float) -> void:
 	if source == null or source.get_tree() == null:
@@ -41,6 +82,7 @@ static func _play(source: Node, kind: String, volume_db: float) -> void:
 
 static func set_sfx_volume_percent(percent: float) -> void:
 	_sfx_volume_percent = clampf(percent, 0.0, 100.0)
+	SettingsStoreLib.set_sfx_volume_percent(_sfx_volume_percent)
 
 static func get_sfx_volume_percent() -> float:
 	return _sfx_volume_percent
@@ -60,6 +102,14 @@ static func _load_custom_stream(kind: String) -> AudioStream:
 	var candidates := SHOOT_PATHS
 	if kind == "enemy_death":
 		candidates = ENEMY_DEATH_PATHS
+	elif kind == "key_pickup":
+		candidates = KEY_PICKUP_PATHS
+	elif kind == "heart_pickup":
+		candidates = HEART_PICKUP_PATHS
+	elif kind == "passive_pickup":
+		candidates = PASSIVE_PICKUP_PATHS
+	elif kind == "player_hurt":
+		candidates = PLAYER_HURT_PATHS
 
 	for path in candidates:
 		if ResourceLoader.exists(path):
@@ -72,6 +122,14 @@ static func _load_custom_stream(kind: String) -> AudioStream:
 static func _build_fallback_stream(kind: String) -> AudioStreamWAV:
 	if kind == "enemy_death":
 		return _generate_tone_stream(580.0, 0.16, 0.30, 0.65, 120.0)
+	if kind == "key_pickup":
+		return _generate_tone_stream(1320.0, 0.08, 0.22, 1680.0, 0.0)
+	if kind == "heart_pickup":
+		return _generate_tone_stream(720.0, 0.12, 0.24, 980.0, 0.0)
+	if kind == "passive_pickup":
+		return _generate_tone_stream(520.0, 0.22, 0.26, 1040.0, 0.0)
+	if kind == "player_hurt":
+		return _generate_tone_stream(240.0, 0.18, 0.28, 120.0, 0.14)
 	return _generate_tone_stream(880.0, 0.07, 0.20, 0.0, 0.0)
 
 static func _generate_tone_stream(start_freq: float, duration: float, amplitude: float, end_freq: float, noise_mix: float) -> AudioStreamWAV:

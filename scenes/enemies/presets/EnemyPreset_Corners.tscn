@@ -1,0 +1,15 @@
+[gd_scene format=3]
+
+[node name="EnemyPresetCorners" type="Node2D"]
+
+[node name="SlotA" type="Marker2D" parent="."]
+position = Vector2(-330, -170)
+
+[node name="SlotB" type="Marker2D" parent="."]
+position = Vector2(330, -170)
+
+[node name="SlotC" type="Marker2D" parent="."]
+position = Vector2(-330, 170)
+
+[node name="SlotD" type="Marker2D" parent="."]
+position = Vector2(330, 170)

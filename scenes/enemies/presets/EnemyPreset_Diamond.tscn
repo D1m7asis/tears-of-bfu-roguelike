@@ -1,0 +1,18 @@
+[gd_scene format=3]
+
+[node name="EnemyPresetDiamond" type="Node2D"]
+
+[node name="SlotA" type="Marker2D" parent="."]
+position = Vector2(0, -210)
+
+[node name="SlotB" type="Marker2D" parent="."]
+position = Vector2(260, 0)
+
+[node name="SlotC" type="Marker2D" parent="."]
+position = Vector2(0, 210)
+
+[node name="SlotD" type="Marker2D" parent="."]
+position = Vector2(-260, 0)
+
+[node name="SlotE" type="Marker2D" parent="."]
+position = Vector2(0, 0)

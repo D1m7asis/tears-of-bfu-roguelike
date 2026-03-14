@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bhc352igmv65g" path="res://scripts/core/item_pickup.gd" id="1_1m3bo"]
 [ext_resource type="Texture2D" uid="uid://hlk18gp2bhyc" path="res://assets/sprites/items/key.png" id="2_1m3bo"]
+[ext_resource type="Texture2D" path="res://assets/sprites/items/pedestal.svg" id="3_pedestal"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1m3bo"]
 size = Vector2(9.328158, 20)
@@ -11,6 +12,12 @@ scale = Vector2(3, 3)
 collision_layer = 4
 collision_mask = 2
 script = ExtResource("1_1m3bo")
+
+[node name="Pedestal" type="Sprite2D" parent="."]
+position = Vector2(0, 9)
+scale = Vector2(0.24, 0.24)
+texture = ExtResource("3_pedestal")
+z_index = -1
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1500116108]
 scale = Vector2(0.04038163, 0.040381636)

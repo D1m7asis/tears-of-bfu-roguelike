@@ -1,0 +1,27 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/decor/props/DecorWallChunk.tscn" id="1_wall"]
+[ext_resource type="PackedScene" path="res://scenes/decor/props/DecorBarrel.tscn" id="2_barrel"]
+
+[node name="DecorPresetLabyrinthA" type="Node2D"]
+
+[node name="WallTop" parent="." instance=ExtResource("1_wall")]
+position = Vector2(-120, -150)
+
+[node name="WallTopB" parent="." instance=ExtResource("1_wall")]
+position = Vector2(120, -150)
+
+[node name="WallMidLeft" parent="." instance=ExtResource("1_wall")]
+position = Vector2(-180, -20)
+
+[node name="WallMidRight" parent="." instance=ExtResource("1_wall")]
+position = Vector2(60, -20)
+
+[node name="WallBottom" parent="." instance=ExtResource("1_wall")]
+position = Vector2(-80, 120)
+
+[node name="BarrelLeft" parent="." instance=ExtResource("2_barrel")]
+position = Vector2(180, -146)
+
+[node name="BarrelBottom" parent="." instance=ExtResource("2_barrel")]
+position = Vector2(174, 116)

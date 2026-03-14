@@ -1,0 +1,25 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/core/decor_prop.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/environment/barrel.svg" id="2_tex"]
+[ext_resource type="Texture2D" path="res://assets/sprites/environment/ground_shadow.svg" id="3_shadow"]
+
+[sub_resource type="CircleShape2D" id="1_shape"]
+radius = 18.0
+
+[node name="DecorBarrel" type="StaticBody2D"]
+script = ExtResource("1_script")
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, 16)
+scale = Vector2(1.0, 0.8)
+modulate = Color(1, 1, 1, 0.68)
+texture = ExtResource("3_shadow")
+z_index = -1
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.0, 1.0)
+texture = ExtResource("2_tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("1_shape")

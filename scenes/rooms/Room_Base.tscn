@@ -7316,6 +7316,9 @@ position = Vector2(2, 255)
 [node name="Spawn_W" type="Marker2D" parent="Spawns" unique_id=383418365]
 position = Vector2(-525, -2)
 
+[node name="CenterSpawn" type="Marker2D" parent="Spawns"]
+position = Vector2(0, 0)
+
 [node name="ItemPickup" parent="." unique_id=817426506 instance=ExtResource("2_wkw30")]
 position = Vector2(-246, -117.99999)
 item_data = ExtResource("6_wkw30")

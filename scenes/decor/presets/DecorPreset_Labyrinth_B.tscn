@@ -1,0 +1,27 @@
+[gd_scene format=3 uid="uid://byx3n88x6qyql"]
+
+[ext_resource type="PackedScene" path="res://scenes/decor/props/DecorWallChunk.tscn" id="1_wall"]
+[ext_resource type="PackedScene" path="res://scenes/decor/props/DecorRock.tscn" id="2_rock"]
+
+[node name="DecorPresetLabyrinthB" type="Node2D" unique_id=1047603869]
+
+[node name="WallUpperLeft" parent="." unique_id=1141007734 instance=ExtResource("1_wall")]
+position = Vector2(-190, -120)
+
+[node name="WallUpperRight" parent="." unique_id=1283689645 instance=ExtResource("1_wall")]
+position = Vector2(40, -120)
+
+[node name="WallCenter" parent="." unique_id=1929275145 instance=ExtResource("1_wall")]
+position = Vector2(-70, 10)
+
+[node name="WallLowerLeft" parent="." unique_id=1348174489 instance=ExtResource("1_wall")]
+position = Vector2(-200, 138)
+
+[node name="WallLowerRight" parent="." unique_id=543136782 instance=ExtResource("1_wall")]
+position = Vector2(74, 149)
+
+[node name="RockA" parent="." unique_id=381832566 instance=ExtResource("2_rock")]
+position = Vector2(184, -110)
+
+[node name="RockB" parent="." unique_id=1864048296 instance=ExtResource("2_rock")]
+position = Vector2(190, 132)

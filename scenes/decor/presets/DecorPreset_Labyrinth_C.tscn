@@ -1,0 +1,28 @@
+[gd_scene format=3 uid="uid://bejkms8q072sr"]
+
+[ext_resource type="PackedScene" path="res://scenes/decor/props/DecorWallChunk.tscn" id="1_wall"]
+[ext_resource type="PackedScene" path="res://scenes/decor/props/DecorBarrel.tscn" id="2_barrel"]
+[ext_resource type="PackedScene" path="res://scenes/decor/props/DecorRock.tscn" id="3_rock"]
+
+[node name="DecorPresetLabyrinthC" type="Node2D" unique_id=866307981]
+
+[node name="WallNorth" parent="." unique_id=2116152510 instance=ExtResource("1_wall")]
+position = Vector2(-1, -119)
+
+[node name="WallWest" parent="." unique_id=1307747413 instance=ExtResource("1_wall")]
+position = Vector2(-180, -18)
+
+[node name="WallEast" parent="." unique_id=1290746963 instance=ExtResource("1_wall")]
+position = Vector2(178, -18)
+
+[node name="WallSouthLeft" parent="." unique_id=1490263948 instance=ExtResource("1_wall")]
+position = Vector2(-105, 120)
+
+[node name="WallSouthRight" parent="." unique_id=842303264 instance=ExtResource("1_wall")]
+position = Vector2(99, 123)
+
+[node name="BarrelA" parent="." unique_id=2070607283 instance=ExtResource("2_barrel")]
+position = Vector2(-22, -14)
+
+[node name="RockA" parent="." unique_id=1869437282 instance=ExtResource("3_rock")]
+position = Vector2(30, -12)

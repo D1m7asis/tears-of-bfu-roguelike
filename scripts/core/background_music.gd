@@ -1,5 +1,7 @@
 extends AudioStreamPlayer
 
+const SettingsStoreLib = preload("res://scripts/core/settings_store.gd")
+
 @export var music_folder: String = "res://assets/audio/music"
 @export var music_volume_db: float = -18.0
 
@@ -18,7 +20,7 @@ var _pitch_tween: Tween = null
 
 func _ready() -> void:
 	add_to_group("background_music")
-	set_music_volume_db(music_volume_db)
+	set_music_volume_percent(SettingsStoreLib.get_music_volume_percent())
 	pitch_scale = NORMAL_PITCH_SCALE
 	finished.connect(_on_track_finished)
 	_rng.randomize()
@@ -101,6 +103,7 @@ func get_music_volume_db() -> float:
 
 func set_music_volume_percent(percent: float) -> void:
 	var normalized := clampf(percent, 0.0, 100.0) / 100.0
+	SettingsStoreLib.set_music_volume_percent(percent)
 	set_music_volume_db(lerpf(MIN_VOLUME_DB, MAX_VOLUME_DB, normalized))
 
 func get_music_volume_percent() -> float:

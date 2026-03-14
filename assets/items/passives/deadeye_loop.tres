@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/core/item_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/items/firerate_item.svg" id="2_icon"]
+
+[resource]
+script = ExtResource("1_script")
+id = "deadeye_loop"
+display_name = "Deadeye Loop"
+icon = ExtResource("2_icon")
+stackable = false
+max_stack = 1
+pickup_kind = "passive_item"
+damage_delta = 1
+attack_speed_delta = 0.5
+display_lines = PackedStringArray("DMG +1", "ATS +0.5")
