@@ -71,17 +71,21 @@ func _physics_process(delta):
 		velocity = Vector2.ZERO
 		return
 
-	_projectile_cooldown_remaining = maxf(0.0, _projectile_cooldown_remaining - delta)
-	_leap_cooldown_remaining = maxf(0.0, _leap_cooldown_remaining - delta)
-	_boss_burst_cooldown_remaining = maxf(0.0, _boss_burst_cooldown_remaining - delta)
-	_update_phase_state()
-	
-	var world_scale := 1.0
+	var world_scale: float = 1.0
 	if player.has_method("get_bullet_time_world_scale"):
 		world_scale = player.get_bullet_time_world_scale()
+	var time_scale_delta: float = delta * world_scale
+	var is_time_frozen: bool = world_scale <= 0.02
+
+	if not is_time_frozen:
+		_projectile_cooldown_remaining = maxf(0.0, _projectile_cooldown_remaining - time_scale_delta)
+		_leap_cooldown_remaining = maxf(0.0, _leap_cooldown_remaining - time_scale_delta)
+		_boss_burst_cooldown_remaining = maxf(0.0, _boss_burst_cooldown_remaining - time_scale_delta)
+	_update_phase_state()
 
 	if _leap_time_remaining > 0.0:
-		_leap_time_remaining = maxf(0.0, _leap_time_remaining - delta)
+		if not is_time_frozen:
+			_leap_time_remaining = maxf(0.0, _leap_time_remaining - time_scale_delta)
 		velocity = _leap_direction * leap_speed * world_scale
 		move_and_slide()
 		_attempt_contact_damage()
@@ -163,7 +167,10 @@ func _get_navigation_direction() -> Vector2:
 func _get_shooter_direction() -> Vector2:
 	var to_player := player.global_position - global_position
 	var distance := to_player.length()
-	if distance <= projectile_range and _projectile_cooldown_remaining <= 0.0:
+	var world_scale: float = 1.0
+	if player.has_method("get_bullet_time_world_scale"):
+		world_scale = player.get_bullet_time_world_scale()
+	if world_scale > 0.02 and distance <= projectile_range and _projectile_cooldown_remaining <= 0.0:
 		_fire_projectile(to_player.normalized())
 		_projectile_cooldown_remaining = projectile_cooldown
 
@@ -183,19 +190,23 @@ func _get_boss_direction() -> Vector2:
 	var distance := to_player.length()
 	if distance == 0.0:
 		return Vector2.ZERO
+	var world_scale: float = 1.0
+	if player.has_method("get_bullet_time_world_scale"):
+		world_scale = player.get_bullet_time_world_scale()
+	var can_advance_attacks: bool = world_scale > 0.02
 
-	if _boss_burst_cooldown_remaining <= 0.0 and _current_phase >= 2:
+	if can_advance_attacks and _boss_burst_cooldown_remaining <= 0.0 and _current_phase >= 2:
 		_fire_boss_burst()
 		_boss_burst_cooldown_remaining = maxf(0.7, boss_burst_cooldown - float(_current_phase - 1) * 0.45)
 
-	if _projectile_cooldown_remaining <= 0.0 and distance <= projectile_range:
+	if can_advance_attacks and _projectile_cooldown_remaining <= 0.0 and distance <= projectile_range:
 		_fire_projectile(to_player.normalized())
 		if _current_phase >= 3:
 			_fire_projectile(to_player.normalized().rotated(0.18))
 			_fire_projectile(to_player.normalized().rotated(-0.18))
 		_projectile_cooldown_remaining = maxf(0.32, projectile_cooldown - float(_current_phase - 1) * 0.22)
 
-	if _current_phase >= 2 and _leap_cooldown_remaining <= 0.0 and distance <= leap_trigger_range:
+	if can_advance_attacks and _current_phase >= 2 and _leap_cooldown_remaining <= 0.0 and distance <= leap_trigger_range:
 		_leap_direction = to_player.normalized()
 		_leap_time_remaining = leap_duration + float(_current_phase - 2) * 0.05
 		_leap_cooldown_remaining = maxf(0.7, leap_cooldown - float(_current_phase - 1) * 0.25)
@@ -215,7 +226,10 @@ func _get_boss_direction() -> Vector2:
 func _get_jumper_direction() -> Vector2:
 	var to_player := player.global_position - global_position
 	var distance := to_player.length()
-	if distance <= leap_trigger_range and _leap_cooldown_remaining <= 0.0:
+	var world_scale: float = 1.0
+	if player.has_method("get_bullet_time_world_scale"):
+		world_scale = player.get_bullet_time_world_scale()
+	if world_scale > 0.02 and distance <= leap_trigger_range and _leap_cooldown_remaining <= 0.0:
 		_leap_direction = to_player.normalized()
 		_leap_time_remaining = leap_duration
 		_leap_cooldown_remaining = leap_cooldown
@@ -310,7 +324,7 @@ func die():
 	if player == null:
 		player = get_tree().get_first_node_in_group("player")
 	if player != null and player.has_method("on_enemy_killed"):
-		player.on_enemy_killed()
+		player.on_enemy_killed(self)
 	call_deferred("_dissolve_and_queue_free")
 
 

@@ -11,6 +11,7 @@ icon = ExtResource("2_icon")
 stackable = false
 max_stack = 1
 pickup_kind = "active_item"
+rarity_tier = "rare"
 display_lines = PackedStringArray("Executes weakened enemies", "Deals 5 to the rest", "Cooldown 22s")
 active_kind = "execution_order"
 active_cooldown_seconds = 22.0

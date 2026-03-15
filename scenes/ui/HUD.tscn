@@ -34,7 +34,7 @@ autowrap_mode = 2
 [node name="ActiveItemPanel" type="Panel" parent="VBoxContainer"]
 visible = false
 layout_mode = 2
-custom_minimum_size = Vector2(220, 44)
+custom_minimum_size = Vector2(270, 58)
 
 [node name="ActiveItemRow" type="HBoxContainer" parent="VBoxContainer/ActiveItemPanel"]
 layout_mode = 1
@@ -48,22 +48,26 @@ offset_bottom = -6.0
 theme_override_constants/separation = 10
 
 [node name="ActiveItemIcon" type="TextureRect" parent="VBoxContainer/ActiveItemPanel/ActiveItemRow"]
-custom_minimum_size = Vector2(30, 30)
+custom_minimum_size = Vector2(34, 34)
 layout_mode = 2
 stretch_mode = 5
 
 [node name="ActiveItemText" type="VBoxContainer" parent="VBoxContainer/ActiveItemPanel/ActiveItemRow"]
 layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="ActiveItemName" type="Label" parent="VBoxContainer/ActiveItemPanel/ActiveItemRow/ActiveItemText"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 18
 text = "Active"
+autowrap_mode = 2
 
 [node name="ActiveItemState" type="Label" parent="VBoxContainer/ActiveItemPanel/ActiveItemRow/ActiveItemText"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.83, 0.83, 0.83, 1)
-text = "Ready [Space]"
+theme_override_font_sizes/font_size = 15
+text = "Ready [E]"
+autowrap_mode = 2
 
 [node name="BulletTimeLabel" type="Label" parent="VBoxContainer"]
 layout_mode = 2
@@ -170,6 +174,31 @@ offset_bottom = 200.0
 grow_horizontal = 0
 script = ExtResource("2_atyv1")
 
+[node name="TopRight" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -230.0
+offset_top = 208.0
+offset_right = -12.0
+offset_bottom = 272.0
+grow_horizontal = 0
+theme_override_constants/margin_left = 0
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_right = 0
+theme_override_constants/margin_bottom = 0
+
+[node name="RunMetaLabel" type="Label" parent="TopRight"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.93, 0.86, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 20
+text = "BASEMENT 1\nTIME 00:00\nSCORE 0"
+horizontal_alignment = 2
+
 [node name="ItemCard" type="Panel" parent="."]
 visible = false
 layout_mode = 1
@@ -223,21 +252,22 @@ text = "DMG +1"
 [node name="PickupHint" type="Label" parent="."]
 visible = false
 layout_mode = 1
-anchors_preset = 10
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -190.0
-offset_top = 88.0
-offset_right = 190.0
-offset_bottom = 162.0
+offset_right = 420.0
+offset_bottom = 116.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+size_flags_horizontal = 4
 theme_override_colors/font_color = Color(1, 0.95, 0.84, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_offset_x = 1
 theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 18
 horizontal_alignment = 1
-vertical_alignment = 1
+vertical_alignment = 0
 autowrap_mode = 2
+clip_text = false
+text_overrun_behavior = 0
 
 [node name="CinematicBackdrop" type="ColorRect" parent="."]
 visible = false
@@ -312,6 +342,149 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
 text = "Esc resume"
 horizontal_alignment = 1
+
+[node name="InventoryOverlay" type="ColorRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.01, 0.01, 0.01, 0.62)
+
+[node name="InventoryPanel" type="Panel" parent="InventoryOverlay"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -500.0
+offset_top = -310.0
+offset_right = 500.0
+offset_bottom = 310.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="InventoryMargin" type="MarginContainer" parent="InventoryOverlay/InventoryPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 18.0
+offset_top = 18.0
+offset_right = -18.0
+offset_bottom = -18.0
+
+[node name="InventoryContent" type="VBoxContainer" parent="InventoryOverlay/InventoryPanel/InventoryMargin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="InventoryTitle" type="Label" parent="InventoryOverlay/InventoryPanel/InventoryMargin/InventoryContent"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.93, 0.84, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 34
+text = "INVENTORY"
+horizontal_alignment = 1
+
+[node name="InventorySubtitle" type="Label" parent="InventoryOverlay/InventoryPanel/InventoryMargin/InventoryContent"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.76, 0.82, 1)
+theme_override_font_sizes/font_size = 16
+text = "Q close  |  E use active  |  Live run breakdown"
+horizontal_alignment = 1
+
+[node name="InventoryActiveRow" type="HBoxContainer" parent="InventoryOverlay/InventoryPanel/InventoryMargin/InventoryContent"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="InventoryActiveIcon" type="TextureRect" parent="InventoryOverlay/InventoryPanel/InventoryMargin/InventoryContent/InventoryActiveRow"]
+custom_minimum_size = Vector2(52, 52)
+layout_mode = 2
+stretch_mode = 5
+
+[node name="InventoryActiveText" type="VBoxContainer" parent="InventoryOverlay/InventoryPanel/InventoryMargin/InventoryContent/InventoryActiveRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="InventoryActiveName" type="Label" parent="InventoryOverlay/InventoryPanel/InventoryMargin/InventoryContent/InventoryActiveRow/InventoryActiveText"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "No Active Item"
+
+[node name="InventoryActiveState" type="Label" parent="InventoryOverlay/InventoryPanel/InventoryMargin/InventoryContent/InventoryActiveRow/InventoryActiveText"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.86, 0.86, 0.86, 1)
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 2
+text = "Slot empty"
+
+[node name="InventoryColumns" type="HBoxContainer" parent="InventoryOverlay/InventoryPanel/InventoryMargin/InventoryContent"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="InventoryStackables" type="Label" parent="InventoryOverlay/InventoryPanel/InventoryMargin/InventoryContent/InventoryColumns"]
+custom_minimum_size = Vector2(210, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.92, 0.9, 0.83, 1)
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 2
+vertical_alignment = 0
+text = "STACKABLES\nNone"
+
+[node name="InventoryStatsColumns" type="HBoxContainer" parent="InventoryOverlay/InventoryPanel/InventoryMargin/InventoryContent/InventoryColumns"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 18
+
+[node name="InventoryStatsLeft" type="Label" parent="InventoryOverlay/InventoryPanel/InventoryMargin/InventoryContent/InventoryColumns/InventoryStatsColumns"]
+custom_minimum_size = Vector2(185, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.82, 0.89, 0.98, 1)
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 2
+vertical_alignment = 0
+text = "OFFENSE"
+
+[node name="InventoryStatsRight" type="Label" parent="InventoryOverlay/InventoryPanel/InventoryMargin/InventoryContent/InventoryColumns/InventoryStatsColumns"]
+custom_minimum_size = Vector2(185, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.9, 0.96, 0.86, 1)
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 2
+vertical_alignment = 0
+text = "SURVIVAL"
+
+[node name="InventoryPassivesTitle" type="Label" parent="InventoryOverlay/InventoryPanel/InventoryMargin/InventoryContent"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "COLLECTED PASSIVES"
+
+[node name="InventoryPassivesScroll" type="ScrollContainer" parent="InventoryOverlay/InventoryPanel/InventoryMargin/InventoryContent"]
+custom_minimum_size = Vector2(0, 230)
+layout_mode = 2
+clip_contents = true
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 1
+
+[node name="InventoryPassives" type="GridContainer" parent="InventoryOverlay/InventoryPanel/InventoryMargin/InventoryContent/InventoryPassivesScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
+columns = 4
 
 [node name="MusicValueLabel" type="Label" parent="PauseOverlay/PausePanel/PauseContent"]
 layout_mode = 2

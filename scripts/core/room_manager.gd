@@ -54,6 +54,7 @@ var _generation_rng := RandomNumberGenerator.new()
 var _reward_rng := RandomNumberGenerator.new()
 var _cleared_normal_room_count: int = 0
 var _planned_chest_slots: Array[int] = []
+var _force_center_spawn_once: bool = false
 
 
 func _ready() -> void:
@@ -66,6 +67,7 @@ func _ready() -> void:
 	generate_map()
 	_assign_boss_room()
 	emit_signal("map_generated", map)
+	_force_center_spawn_once = true
 	load_room(Vector2i.ZERO, Dir.S)
 	call_deferred("_activate_current_room_enemies_after_delay")
 	call_deferred("_announce_floor_if_needed")
@@ -121,6 +123,8 @@ func _create_room(pos: Vector2i) -> void:
 		"boss_intro_seen": false,
 		"reward_type": "none",
 		"reward_claimed": pos == Vector2i.ZERO,
+		"reward_item_path": "",
+		"reward_pickup_present": false,
 	}
 
 
@@ -155,6 +159,8 @@ func load_room(pos: Vector2i, entered_from: int) -> void:
 	emit_signal("room_loaded", pos)
 
 	if current_room_instance != null and current_room_instance.get_parent() == room_root:
+		if current_room_instance.has_method("on_room_unloaded"):
+			current_room_instance.on_room_unloaded()
 		room_root.remove_child(current_room_instance)
 	current_room_instance = null
 
@@ -221,13 +227,32 @@ func mark_room_reward_claimed(pos: Vector2i) -> void:
 	if not map.has(pos):
 		return
 	map[pos]["reward_claimed"] = true
-	if current_pos == pos and current_room_instance != null and current_room_instance.has_method("apply_room_data"):
-		current_room_instance.apply_room_data(map[pos])
+	map[pos]["reward_pickup_present"] = false
+	notify_room_state_changed(pos)
+
+
+func set_room_reward_item(pos: Vector2i, item_path: String) -> void:
+	if not map.has(pos):
+		return
+	if str(map[pos].get("reward_item_path", "")) == item_path and bool(map[pos].get("reward_pickup_present", false)) == (item_path != ""):
+		return
+	map[pos]["reward_item_path"] = item_path
+	map[pos]["reward_pickup_present"] = item_path != ""
+	notify_room_state_changed(pos)
+
+
+func set_room_reward_pickup_present(pos: Vector2i, present: bool) -> void:
+	if not map.has(pos):
+		return
+	if bool(map[pos].get("reward_pickup_present", false)) == present:
+		return
+	map[pos]["reward_pickup_present"] = present
 	notify_room_state_changed(pos)
 
 
 func _spawn_player_at_entry(entered_from: int) -> void:
-	if current_pos == Vector2i.ZERO:
+	if _force_center_spawn_once:
+		_force_center_spawn_once = false
 		var center_marker := _find_center_spawn_marker()
 		if center_marker != null:
 			player.global_position = center_marker.global_position
@@ -235,7 +260,25 @@ func _spawn_player_at_entry(entered_from: int) -> void:
 				player.lock_doors()
 			return
 
-	var marker_name: String = ""
+	var marker := _find_entry_spawn_marker(entered_from)
+	if marker != null and marker is Node2D:
+		var spawn_pos := (marker as Node2D).global_position
+		spawn_pos += ENTRY_OFFSETS.get(entered_from, Vector2.ZERO)
+		player.global_position = spawn_pos
+	else:
+		var fallback_marker := _find_center_spawn_marker()
+		if fallback_marker != null:
+			player.global_position = fallback_marker.global_position
+		elif current_room_instance is Node2D:
+			player.global_position = (current_room_instance as Node2D).global_position
+
+	if player.has_method("lock_doors"):
+		player.lock_doors()
+
+func _find_entry_spawn_marker(entered_from: int) -> Node2D:
+	if current_room_instance == null:
+		return null
+	var marker_name := ""
 	match entered_from:
 		Dir.N:
 			marker_name = "Spawn_N"
@@ -245,19 +288,15 @@ func _spawn_player_at_entry(entered_from: int) -> void:
 			marker_name = "Spawn_S"
 		Dir.W:
 			marker_name = "Spawn_W"
-
-	var marker := current_room_instance.get_node_or_null(marker_name)
-	if marker == null:
-		marker = current_room_instance.get_node_or_null("Spawns/" + marker_name)
-	if marker != null and marker is Node2D:
-		var spawn_pos := (marker as Node2D).global_position
-		spawn_pos += ENTRY_OFFSETS.get(entered_from, Vector2.ZERO)
-		player.global_position = spawn_pos
-	else:
-		player.global_position = Vector2.ZERO
-
-	if player.has_method("lock_doors"):
-		player.lock_doors()
+		_:
+			marker_name = ""
+	if marker_name == "":
+		return null
+	for marker_path in [marker_name, "Spawns/" + marker_name]:
+		var marker := current_room_instance.get_node_or_null(marker_path)
+		if marker != null and marker is Node2D:
+			return marker as Node2D
+	return null
 
 func _find_center_spawn_marker() -> Node2D:
 	if current_room_instance == null:
@@ -363,6 +402,8 @@ func _assign_boss_room() -> void:
 	map[farthest_pos]["template"] = boss_room_template
 	map[farthest_pos]["room_kind"] = "boss"
 	map[farthest_pos]["reward_type"] = "none"
+	map[farthest_pos]["reward_item_path"] = ""
+	map[farthest_pos]["reward_pickup_present"] = false
 
 	for dir in DIR_VECTORS.keys():
 		if map[farthest_pos]["doors_exist"][dir] != true:
@@ -421,6 +462,7 @@ func _assign_room_reward(pos: Vector2i) -> void:
 	if room_kind == "boss":
 		map[pos]["reward_type"] = "active_item"
 		map[pos]["reward_claimed"] = false
+		map[pos]["reward_pickup_present"] = false
 		return
 	if room_kind != "normal":
 		map[pos]["reward_type"] = "none"

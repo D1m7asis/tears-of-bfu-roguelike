@@ -11,6 +11,7 @@ icon = ExtResource("2_icon")
 stackable = false
 max_stack = 1
 pickup_kind = "active_item"
+rarity_tier = "uncommon"
 display_lines = PackedStringArray("Invulnerable for 4 seconds", "Cooldown 22s")
 active_kind = "aegis_sigil"
 active_cooldown_seconds = 22.0

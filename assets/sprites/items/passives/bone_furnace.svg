@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+<defs>
+<linearGradient id="fire" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd29a"/><stop offset=".55" stop-color="#ff7b2c"/><stop offset="1" stop-color="#8a260b"/></linearGradient>
+</defs>
+<rect width="32" height="32" rx="7" fill="#160e0b"/>
+<rect x="2" y="2" width="28" height="28" rx="5" fill="none" stroke="#512717" stroke-width="1.1"/>
+<ellipse cx="16" cy="25.6" rx="8.3" ry="3.1" fill="#000" opacity=".26"/>
+<path d="M16 4.5 C20.2 8.2 22.5 11 22.5 15 C22.5 20.2 19.6 24.2 16 27.3 C12.4 24.2 9.5 20.2 9.5 15 C9.5 11 11.8 8.2 16 4.5 Z" fill="url(#fire)" stroke="#ffe4bd" stroke-width=".8"/>
+<path d="M16 9.2 C18.4 11.7 19.7 13.5 19.7 16.1 C19.7 18.7 18.1 20.8 16 22.6 C13.9 20.8 12.3 18.7 12.3 16.1 C12.3 13.5 13.6 11.7 16 9.2 Z" fill="#28130d"/>
+<circle cx="13.2" cy="16.7" r="1.7" fill="#ffad63"/><circle cx="18.8" cy="16.7" r="1.7" fill="#ffad63"/>
+<rect x="13.1" y="20.3" width="5.8" height="2.4" rx="1" fill="#ffbb7b"/>
+<path d="M12.4 9.8 C13.7 8.7 14.8 8 16 7.5" stroke="#fff5e9" stroke-width="1.1" stroke-linecap="round" opacity=".85"/>
+</svg>

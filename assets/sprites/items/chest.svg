@@ -1,24 +1,31 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
   <defs>
-    <linearGradient id="chestWood" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="#b56f31"/>
-      <stop offset="1" stop-color="#6f3f1d"/>
+    <linearGradient id="woodTop" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#d8944b"/>
+      <stop offset="1" stop-color="#8b4f22"/>
     </linearGradient>
-    <linearGradient id="chestBand" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0" stop-color="#f2d173"/>
-      <stop offset="1" stop-color="#9f7331"/>
+    <linearGradient id="woodBody" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#b66d34"/>
+      <stop offset="1" stop-color="#653617"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#ffe39a"/>
+      <stop offset="0.45" stop-color="#c99843"/>
+      <stop offset="1" stop-color="#7e5824"/>
     </linearGradient>
   </defs>
-  <ellipse cx="32" cy="51" rx="20" ry="6" fill="#000000" opacity="0.22"/>
-  <path d="M12 28c0-4 3-7 7-7h26c4 0 7 3 7 7v17c0 4-3 7-7 7H19c-4 0-7-3-7-7Z" fill="url(#chestWood)"/>
-  <path d="M14 27c0-7 8-13 18-13s18 6 18 13v6H14Z" fill="#905225"/>
-  <path d="M14 31h36v6H14z" fill="#4e2d16" opacity="0.55"/>
-  <path d="M20 19h24c6 0 10 3 10 8H10c0-5 4-8 10-8Z" fill="#d49b49"/>
-  <path d="M16 23h32c2 0 4 1 5 3H11c1-2 3-3 5-3Z" fill="#f0bf67" opacity="0.75"/>
-  <rect x="27" y="18" width="10" height="34" rx="2" fill="url(#chestBand)"/>
-  <rect x="12" y="32" width="40" height="4" rx="1" fill="url(#chestBand)"/>
-  <rect x="28" y="31" width="8" height="10" rx="2" fill="#3b2414"/>
-  <rect x="30" y="34" width="4" height="4" rx="1.2" fill="#d6b76d"/>
-  <path d="M18 39h8M38 39h8" stroke="#d9a257" stroke-width="2" stroke-linecap="round" opacity="0.75"/>
-  <path d="M18 45h8M38 45h8" stroke="#532d16" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+  <ellipse cx="32" cy="54" rx="22" ry="7" fill="#000000" opacity="0.28"/>
+  <path d="M11 30c0-4.4 3.4-8 7.8-8h26.4c4.4 0 7.8 3.6 7.8 8v16.5c0 4.1-3.3 7.5-7.5 7.5h-27c-4.2 0-7.5-3.4-7.5-7.5Z" fill="url(#woodBody)"/>
+  <path d="M14 28c0-8.2 8.1-14.5 18-14.5S50 19.8 50 28v5H14Z" fill="url(#woodTop)"/>
+  <path d="M17 22.5h30c3.2 0 5.8 1.8 7 4.5H10c1.2-2.7 3.8-4.5 7-4.5Z" fill="#f0ba6b" opacity="0.78"/>
+  <path d="M11 36h42" stroke="#4b2611" stroke-width="3.2"/>
+  <path d="M18 28h28" stroke="#ffd89a" stroke-width="2" opacity="0.5"/>
+  <rect x="27" y="17" width="10" height="37" rx="2.2" fill="url(#metal)"/>
+  <rect x="12" y="34" width="40" height="5" rx="1.5" fill="url(#metal)"/>
+  <rect x="26" y="31" width="12" height="12" rx="2.2" fill="#3d2412"/>
+  <rect x="29" y="34" width="6" height="5" rx="1.2" fill="#f4d98f"/>
+  <path d="M18 42h8M38 42h8" stroke="#efbf6c" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M18 48h8M38 48h8" stroke="#5f3417" stroke-width="2.2" stroke-linecap="round" opacity="0.55"/>
+  <path d="M11 30c0-4.4 3.4-8 7.8-8h26.4c4.4 0 7.8 3.6 7.8 8v16.5c0 4.1-3.3 7.5-7.5 7.5h-27c-4.2 0-7.5-3.4-7.5-7.5Z" stroke="#2e170b" stroke-width="1.6" fill="none"/>
+  <path d="M14 28c0-8.2 8.1-14.5 18-14.5S50 19.8 50 28v5H14Z" stroke="#5a3115" stroke-width="1.4" fill="none"/>
 </svg>

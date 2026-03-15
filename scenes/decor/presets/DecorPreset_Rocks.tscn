@@ -25,7 +25,7 @@ position = Vector2(31, 0)
 rotation = 0.17278759
 
 [node name="RockB" parent="." unique_id=1914950922 instance=ExtResource("1_rock")]
-position = Vector2(230, 120)
+position = Vector2(223, 165)
 rotation = 0.17278759
 
 [node name="RockB" parent="RockB" unique_id=362325841 instance=ExtResource("1_rock")]
@@ -39,6 +39,18 @@ rotation = 0.17278759
 [node name="RockB" parent="RockB/RockB2" unique_id=1140786373 instance=ExtResource("1_rock")]
 position = Vector2(-1, -40)
 rotation = 0.17278759
+
+[node name="RockB3" parent="RockB" unique_id=1084341285 instance=ExtResource("1_rock")]
+position = Vector2(-402.34747, 79.35692)
+
+[node name="RockB3" parent="RockB/RockB3" unique_id=1628531813 instance=ExtResource("1_rock")]
+position = Vector2(72.865555, 4.5399017)
+
+[node name="RockB" parent="RockB/RockB3" unique_id=1358191228 instance=ExtResource("1_rock")]
+position = Vector2(34.91561, 8.117874)
+
+[node name="RockB2" parent="RockB/RockB3" unique_id=1016505692 instance=ExtResource("1_rock")]
+position = Vector2(37.76408, -27.908318)
 
 [node name="RockC" parent="." unique_id=220772027 instance=ExtResource("1_rock")]
 position = Vector2(104, -81)

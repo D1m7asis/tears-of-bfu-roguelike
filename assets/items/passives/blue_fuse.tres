@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/item_data.gd" id="1_script"]
-[ext_resource type="Texture2D" path="res://assets/sprites/items/firerate_item.svg" id="2_icon"]
+[ext_resource type="Texture2D" path="res://assets/sprites/items/passives/blue_fuse.svg" id="2_icon"]
 
 [resource]
 script = ExtResource("1_script")
@@ -11,5 +11,6 @@ icon = ExtResource("2_icon")
 stackable = false
 max_stack = 1
 pickup_kind = "passive_item"
-attack_speed_delta = 1.1
-display_lines = PackedStringArray("ATS +1.1")
+bullet_time_capacity_delta = 1.0
+bullet_time_kill_recharge_delta = 0.15
+display_lines = PackedStringArray("FOCUS MAX +1.0", "FOCUS/KILL +0.15")

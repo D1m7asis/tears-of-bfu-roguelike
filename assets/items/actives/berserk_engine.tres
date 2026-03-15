@@ -11,6 +11,7 @@ icon = ExtResource("2_icon")
 stackable = false
 max_stack = 1
 pickup_kind = "active_item"
+rarity_tier = "uncommon"
 display_lines = PackedStringArray("DMG +2, ATS +2.0 for 8s", "Cooldown 20s")
 active_kind = "berserk_engine"
 active_cooldown_seconds = 20.0

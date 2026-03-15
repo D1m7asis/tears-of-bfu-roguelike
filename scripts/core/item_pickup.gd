@@ -54,12 +54,11 @@ func _apply_visual_profile() -> void:
 
 	z_index = 20
 	if pedestal != null:
-		pedestal.visible = true
+		pedestal.visible = false
+		pedestal.modulate = Color(1, 1, 1, 1)
 	if item_data.pickup_kind == "heal":
 		sprite.scale = Vector2(0.28, 0.28)
 		sprite.position = Vector2(0, -6)
-		if pedestal != null:
-			pedestal.scale = Vector2(0.22, 0.22)
 		if collision_shape != null:
 			collision_shape.scale = Vector2(1.8, 1.8)
 		return
@@ -67,31 +66,33 @@ func _apply_visual_profile() -> void:
 		sprite.scale = Vector2(0.28, 0.28)
 		sprite.position = Vector2(0, -10)
 		if pedestal != null:
-			pedestal.scale = Vector2(0.28, 0.28)
+			pedestal.visible = true
+			pedestal.scale = Vector2(0.34, 0.34)
+			pedestal.modulate = Color(1.0, 0.96, 0.88, 1.0)
 		if collision_shape != null:
 			collision_shape.scale = Vector2(1.8, 1.8)
 		return
 	if item_data.pickup_kind == "active_item":
 		sprite.scale = Vector2(0.2, 0.2)
 		sprite.position = Vector2(0, -12)
+		var rarity_color: Color = item_data.get_rarity_color()
+		sprite.modulate = rarity_color
 		if pedestal != null:
-			pedestal.scale = Vector2(0.34, 0.34)
+			pedestal.visible = true
+			pedestal.scale = Vector2(0.4, 0.4)
+			pedestal.modulate = rarity_color.lightened(0.08)
 		if collision_shape != null:
 			collision_shape.scale = Vector2(2.1, 2.1)
 		return
 	if item_data.id == "key":
 		sprite.scale = Vector2(0.04038163, 0.040381636)
 		sprite.position = Vector2(0, -4)
-		if pedestal != null:
-			pedestal.scale = Vector2(0.18, 0.18)
 		if collision_shape != null:
 			collision_shape.scale = Vector2.ONE
 		return
 
 	sprite.scale = Vector2(0.065, 0.065)
 	sprite.position = Vector2(0, -6)
-	if pedestal != null:
-		pedestal.scale = Vector2(0.22, 0.22)
 	if collision_shape != null:
 		collision_shape.scale = Vector2(1.3, 1.3)
 
@@ -137,7 +138,7 @@ func get_interaction_hint() -> String:
 	if item_data.pickup_kind == "heal":
 		return "%s\nHeal +%d HP" % [item_data.display_name, item_data.heal_amount]
 	if item_data.pickup_kind == "active_item":
-		var details := "\n".join(item_data.display_lines)
+		var details := _format_hint_lines(item_data.display_lines)
 		var replace_hint := ""
 		var player := get_tree().get_first_node_in_group("player")
 		if player != null and player.has_method("get_active_item_name"):
@@ -146,11 +147,20 @@ func get_interaction_hint() -> String:
 				replace_hint = "\nReplaces %s" % current_active_name
 		return item_data.display_name + replace_hint if details == "" else "%s\n%s%s" % [item_data.display_name, details, replace_hint]
 	if item_data.pickup_kind == "passive_item":
-		var details := "\n".join(_build_passive_lines())
+		var details := _format_hint_lines(item_data.build_stat_lines())
 		return item_data.display_name if details == "" else "%s\n%s" % [item_data.display_name, details]
 	if item_data.id == "key":
 		return "Key\nOpens treasure chests"
 	return item_data.display_name
+
+
+func get_hint_anchor_world_position() -> Vector2:
+	if sprite != null and sprite.texture != null:
+		var texture_size := sprite.texture.get_size()
+		if texture_size.x > 0 and texture_size.y > 0:
+			var top_offset := sprite.position.y - texture_size.y * sprite.scale.y * 0.5
+			return global_position + Vector2(0.0, top_offset)
+	return global_position + Vector2(0.0, -18.0)
 
 
 func _notify_room_pickup_changed() -> void:
@@ -176,15 +186,12 @@ func _is_player_overlapping() -> bool:
 
 
 func _build_passive_lines() -> PackedStringArray:
-	var lines := PackedStringArray()
 	if item_data == null:
-		return lines
-	if item_data.damage_delta != 0:
-		lines.append("DMG %s%d" % ["+" if item_data.damage_delta > 0 else "", item_data.damage_delta])
-	if item_data.attack_speed_delta != 0.0:
-		lines.append("ATS %s%.1f" % ["+" if item_data.attack_speed_delta > 0.0 else "", item_data.attack_speed_delta])
-	if item_data.max_health_delta != 0:
-		lines.append("MAX HP %s%d" % ["+" if item_data.max_health_delta > 0 else "", item_data.max_health_delta])
+		return PackedStringArray()
+	return item_data.build_stat_lines()
+
+
+func _format_hint_lines(lines: PackedStringArray) -> String:
 	if lines.is_empty():
-		return item_data.display_lines
-	return lines
+		return ""
+	return "\n".join(lines)

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+<defs>
+<radialGradient id="clock" cx=".4" cy=".35" r=".78"><stop offset="0" stop-color="#fff1b9"/><stop offset=".7" stop-color="#ffca73"/><stop offset="1" stop-color="#9f5027"/></radialGradient>
+</defs>
+<rect width="32" height="32" rx="7" fill="#1a130d"/>
+<rect x="2" y="2" width="28" height="28" rx="5" fill="none" stroke="#56311d" stroke-width="1.1"/>
+<ellipse cx="16" cy="24.9" rx="8.4" ry="3" fill="#000" opacity=".22"/>
+<circle cx="16" cy="16" r="9.2" fill="url(#clock)" stroke="#ffe9b4" stroke-width=".9"/>
+<circle cx="16" cy="16" r="1.7" fill="#6a3818"/>
+<path d="M16 16 V10 M16 16 L20.9 18.1" stroke="#512a15" stroke-width="2.4" stroke-linecap="round"/>
+<path d="M7.2 8.9 L10 6.2 M24.8 8.9 L22 6.2" stroke="#ff9a50" stroke-width="2.2" stroke-linecap="round"/>
+<path d="M12 8.5 C13.4 7.5 14.8 7 16.4 6.8" stroke="#fff9df" stroke-width="1.1" stroke-linecap="round"/>
+</svg>

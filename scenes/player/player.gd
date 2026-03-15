@@ -10,6 +10,7 @@ const ITEM_PICKUP_SCENE = preload("res://scenes/ItemPickup.tscn")
 @export var speed: float = 300.0
 @export var base_damage: int = 1
 @export var base_attack_speed: float = 3.33
+@export var base_projectile_speed: float = 600.0
 
 @onready var bullet_scene: PackedScene = preload("res://scenes/player/bullet.tscn")
 var can_shoot: bool = true
@@ -32,6 +33,14 @@ var health: int = 0
 var _max_health_bonus: int = 0
 var _damage_bonus: int = 0
 var _attack_speed_bonus: float = 0.0
+var _move_speed_bonus: float = 0.0
+var _bullet_time_capacity_bonus: float = 0.0
+var _bullet_time_kill_recharge_bonus: float = 0.0
+var _heal_on_kill: int = 0
+var _damage_reduction: int = 0
+var _active_cooldown_multiplier: float = 1.0
+var _bonus_bullet_count: int = 0
+var _projectile_speed_bonus: float = 0.0
 var collected_passive_items: Array[ItemData] = []
 
 @export var game_over_scene_path: String = "res://scenes/ui/GameOver.tscn"
@@ -54,7 +63,7 @@ var is_bullet_time_active: bool = false
 var bullet_time_blend: float = 0.0
 var background_music = null
 var _base_sprite_scale: Vector2 = Vector2.ONE
-@export var pickup_hint_radius: float = 110.0
+@export var pickup_hint_radius: float = 145.0
 var active_item: ItemData = null
 var active_item_cooldown_remaining: float = 0.0
 var _active_overdrive_bonus_damage: int = 0
@@ -69,6 +78,9 @@ var _stasis_cast_id: int = 0
 var _speed_boost_cast_id: int = 0
 var _temporary_speed_bonus: float = 0.0
 var _damage_feedback_tween: Tween = null
+var run_elapsed_seconds: float = 0.0
+var run_score: int = 0
+var run_kill_count: int = 0
 
 func _ready() -> void:
 	add_to_group("player")
@@ -81,7 +93,7 @@ func _ready() -> void:
 		_import_run_state(RunStateLib.consume_player_state())
 	elif KEY_ITEM_DATA != null and starting_keys > 0:
 		add_item(KEY_ITEM_DATA, starting_keys)
-	bullet_time_charge = bullet_time_max_seconds
+	bullet_time_charge = get_bullet_time_capacity()
 	restart_overlay = get_tree().get_first_node_in_group("restart_overlay")
 	hud = get_tree().get_first_node_in_group("hud")
 	background_music = get_tree().get_first_node_in_group("background_music")
@@ -112,16 +124,19 @@ func _physics_process(_delta: float) -> void:
 		direction.y -= 1
 
 	direction = direction.normalized()
-	velocity = direction * (speed + _temporary_speed_bonus)
+	velocity = direction * (speed + _move_speed_bonus + _temporary_speed_bonus)
 	move_and_slide()
 
 func _process(delta: float) -> void:
 	if get_tree().paused:
 		_set_bullet_time_active(false)
 		return
+	if Input.is_action_just_pressed("inventory"):
+		_toggle_inventory()
 	if is_dying or is_room_transitioning:
 		_set_bullet_time_active(false)
 		return
+	run_elapsed_seconds += delta
 
 	if door_lock_time > 0.0:
 		door_lock_time -= delta
@@ -164,18 +179,13 @@ func _process(delta: float) -> void:
 	_update_hud_bullet_time()
 	_update_hud_active_item()
 	_update_pickup_hint()
+	_update_hud_run_meta()
 
 func shoot(dir: Vector2) -> void:
 	if is_dying or is_room_transitioning or not can_shoot:
 		return
 	can_shoot = false
-
-	var bullet = bullet_scene.instantiate()
-	bullet.global_position = global_position + dir * bullet_spawn_offset
-	bullet.direction = dir
-	bullet.damage = get_damage_per_shot()
-	bullet.add_to_group("bullet")
-	get_tree().current_scene.add_child(bullet)
+	_spawn_bullet(dir)
 	SfxLib.play_shoot(self)
 
 	await get_tree().create_timer(get_fire_cooldown_current()).timeout
@@ -279,7 +289,8 @@ func take_damage(amount: int) -> void:
 	if is_dying or _is_active_invulnerable:
 		return
 
-	health -= amount
+	var final_damage: int = max(1, amount - _damage_reduction)
+	health -= final_damage
 	if health < 0:
 		health = 0
 
@@ -316,11 +327,25 @@ func get_fire_cooldown_current() -> float:
 func get_attack_speed_current() -> float:
 	return maxf(0.75, base_attack_speed + _attack_speed_bonus + _active_overdrive_bonus_ats)
 
+func get_projectile_speed_current() -> float:
+	return maxf(220.0, base_projectile_speed + _projectile_speed_bonus)
+
+func get_bullet_time_capacity() -> float:
+	return maxf(1.0, bullet_time_max_seconds + _bullet_time_capacity_bonus)
+
 func get_current_stats() -> Dictionary:
 	return {
 		"damage": get_damage_per_shot(),
 		"attack_speed": get_attack_speed_current(),
 		"max_health": max_health,
+		"move_speed": speed + _move_speed_bonus,
+		"armor": _damage_reduction,
+		"heal_on_kill": _heal_on_kill,
+		"extra_shots": _bonus_bullet_count,
+		"projectile_speed": get_projectile_speed_current(),
+		"focus_max": get_bullet_time_capacity(),
+		"focus_kill_gain": bullet_time_kill_recharge_seconds + _bullet_time_kill_recharge_bonus,
+		"active_cooldown_multiplier": _active_cooldown_multiplier,
 	}
 
 func set_active_item(item: ItemData) -> void:
@@ -372,7 +397,7 @@ func use_active_item() -> void:
 		_:
 			return
 
-	active_item_cooldown_remaining = maxf(active_item.active_cooldown_seconds, 0.1)
+	active_item_cooldown_remaining = maxf(active_item.active_cooldown_seconds * _active_cooldown_multiplier, 0.1)
 	_update_hud_all()
 
 func _active_judgement() -> void:
@@ -384,7 +409,7 @@ func _active_red_nova() -> void:
 		_spawn_bullet(Vector2.RIGHT.rotated(angle))
 
 func _active_time_flask() -> void:
-	bullet_time_charge = bullet_time_max_seconds
+	bullet_time_charge = get_bullet_time_capacity()
 	_update_hud_bullet_time()
 
 func _active_aegis_sigil() -> void:
@@ -422,7 +447,7 @@ func _active_mirror_fan() -> void:
 	_spawn_burst(24, 1.0, 1.0)
 
 func _active_chrono_surge() -> void:
-	bullet_time_charge = bullet_time_max_seconds
+	bullet_time_charge = get_bullet_time_capacity()
 	_set_bullet_time_active(true)
 	_update_hud_bullet_time()
 
@@ -468,7 +493,7 @@ func _active_blood_pact() -> void:
 		_update_hud_health()
 	_blood_pact_cast_id += 1
 	_apply_temporary_overdrive(5, 2.5, _blood_pact_cast_id, "_end_blood_pact")
-	bullet_time_charge = minf(bullet_time_max_seconds, bullet_time_charge + 1.4)
+	bullet_time_charge = minf(get_bullet_time_capacity(), bullet_time_charge + 1.4)
 	_update_hud_bullet_time()
 
 func _end_blood_pact(cast_id: int) -> void:
@@ -511,7 +536,7 @@ func _end_stasis_mine(cast_id: int) -> void:
 
 func _active_soul_lantern() -> void:
 	heal(1)
-	bullet_time_charge = minf(bullet_time_max_seconds, bullet_time_charge + 1.0)
+	bullet_time_charge = minf(get_bullet_time_capacity(), bullet_time_charge + 1.0)
 	_update_hud_bullet_time()
 	_spawn_burst(12, 1.0, 1.6)
 
@@ -527,19 +552,6 @@ func _spawn_burst(count: int, damage_multiplier: float = 1.0, speed_multiplier: 
 	for index in range(count):
 		var angle := TAU * float(index) / float(count)
 		_spawn_custom_bullet(Vector2.RIGHT.rotated(angle), max(1, int(round(get_damage_per_shot() * damage_multiplier))), 600.0 * speed_multiplier)
-
-func _spawn_custom_bullet(dir: Vector2, custom_damage: int, custom_speed: float) -> void:
-	if bullet_scene == null:
-		return
-	var bullet = bullet_scene.instantiate()
-	if bullet == null:
-		return
-	bullet.global_position = global_position + dir.normalized() * bullet_spawn_offset
-	bullet.direction = dir.normalized()
-	bullet.damage = custom_damage
-	bullet.speed = custom_speed
-	bullet.add_to_group("bullet")
-	get_tree().current_scene.add_child(bullet)
 
 func _apply_temporary_invulnerability(_duration: float, cast_id: int, callback_name: String) -> void:
 	_is_active_invulnerable = true
@@ -586,6 +598,14 @@ func apply_passive_item(item: ItemData) -> void:
 	collected_passive_items.append(item)
 	_damage_bonus += item.damage_delta
 	_attack_speed_bonus += item.attack_speed_delta
+	_move_speed_bonus += item.move_speed_delta
+	_bullet_time_capacity_bonus += item.bullet_time_capacity_delta
+	_bullet_time_kill_recharge_bonus += item.bullet_time_kill_recharge_delta
+	_heal_on_kill += item.heal_on_kill
+	_damage_reduction += item.damage_reduction
+	_active_cooldown_multiplier *= item.active_cooldown_multiplier
+	_bonus_bullet_count += item.bonus_bullet_count
+	_projectile_speed_bonus += item.projectile_speed_delta
 
 	var old_max_health := max_health
 	_max_health_bonus += item.max_health_delta
@@ -594,6 +614,7 @@ func apply_passive_item(item: ItemData) -> void:
 		health = min(max_health, health + item.max_health_delta)
 	else:
 		health = min(health, max_health)
+	bullet_time_charge = minf(get_bullet_time_capacity(), bullet_time_charge)
 
 	_update_hud_all()
 	if hud != null and hud.has_method("show_passive_item_card"):
@@ -604,6 +625,12 @@ func die() -> void:
 		return
 
 	is_dying = true
+	RunStateLib.store_death_summary({
+		"kills": run_kill_count,
+		"score": run_score,
+		"time_seconds": run_elapsed_seconds,
+		"basement": max(RunStateLib.floor_index, RunStateLib.floor_reached_max),
+	})
 	_set_bullet_time_active(false)
 	can_shoot = false
 	velocity = Vector2.ZERO
@@ -661,6 +688,8 @@ func _update_hud_all() -> void:
 	_update_hud_bullet_time()
 	_update_hud_stats()
 	_update_hud_active_item()
+	_update_hud_run_meta()
+	_update_hud_inventory()
 
 func _update_hud_stats() -> void:
 	if hud != null and hud.has_method("update_player_stats"):
@@ -672,6 +701,33 @@ func _update_hud_active_item() -> void:
 	if hud != null and hud.has_method("update_active_item"):
 		hud.update_active_item(active_item, active_item_cooldown_remaining)
 
+
+func _update_hud_run_meta() -> void:
+	if hud != null and hud.has_method("update_run_meta"):
+		hud.update_run_meta(run_elapsed_seconds, run_score, RunStateLib.floor_index)
+
+
+func _update_hud_inventory() -> void:
+	if hud == null or not hud.has_method("update_inventory_view"):
+		return
+	hud.update_inventory_view(active_item, inventory.duplicate(), collected_passive_items.duplicate(), get_current_stats())
+
+
+func _toggle_inventory() -> void:
+	if hud == null or not hud.has_method("set_inventory_open"):
+		return
+	var next_state: bool = true
+	if hud.has_method("is_inventory_open"):
+		next_state = not bool(hud.is_inventory_open())
+	hud.set_inventory_open(next_state)
+	_update_hud_inventory()
+
+
+func _is_inventory_open() -> bool:
+	if hud == null or not hud.has_method("is_inventory_open"):
+		return false
+	return bool(hud.is_inventory_open())
+
 func _update_pickup_hint() -> void:
 	if hud == null or not hud.has_method("set_pickup_hint"):
 		return
@@ -680,6 +736,7 @@ func _update_pickup_hint() -> void:
 
 	var nearest_hint := ""
 	var nearest_distance_sq := pickup_hint_radius * pickup_hint_radius
+	var nearest_hint_position := Vector2.ZERO
 	for node in get_tree().get_nodes_in_group("floor_pickup"):
 		if not (node is Node2D):
 			continue
@@ -693,8 +750,12 @@ func _update_pickup_hint() -> void:
 			continue
 		nearest_distance_sq = distance_sq
 		nearest_hint = hint
+		if node.has_method("get_hint_anchor_world_position"):
+			nearest_hint_position = node.call("get_hint_anchor_world_position")
+		else:
+			nearest_hint_position = (node as Node2D).global_position
 
-	hud.set_pickup_hint(nearest_hint)
+	hud.set_pickup_hint(nearest_hint, nearest_hint_position)
 
 func _go_to_next_floor() -> void:
 	if hud != null and hud.has_method("play_cinematic_banner"):
@@ -760,11 +821,22 @@ func _export_run_state() -> Dictionary:
 		"max_health": max_health,
 		"damage_bonus": _damage_bonus,
 		"attack_speed_bonus": _attack_speed_bonus,
+		"move_speed_bonus": _move_speed_bonus,
+		"bullet_time_capacity_bonus": _bullet_time_capacity_bonus,
+		"bullet_time_kill_recharge_bonus": _bullet_time_kill_recharge_bonus,
+		"heal_on_kill": _heal_on_kill,
+		"damage_reduction": _damage_reduction,
+		"active_cooldown_multiplier": _active_cooldown_multiplier,
+		"bonus_bullet_count": _bonus_bullet_count,
+		"projectile_speed_bonus": _projectile_speed_bonus,
 		"passive_paths": passive_paths,
 		"keys": count_item_id("key"),
 		"bullet_time_charge": bullet_time_charge,
 		"active_item_path": "" if active_item == null else active_item.resource_path,
 		"active_item_cooldown_remaining": active_item_cooldown_remaining,
+		"run_elapsed_seconds": run_elapsed_seconds,
+		"run_score": run_score,
+		"run_kill_count": run_kill_count,
 	}
 
 func _import_run_state(state: Dictionary) -> void:
@@ -772,10 +844,21 @@ func _import_run_state(state: Dictionary) -> void:
 	collected_passive_items.clear()
 	_damage_bonus = int(state.get("damage_bonus", 0))
 	_attack_speed_bonus = float(state.get("attack_speed_bonus", 0.0))
+	_move_speed_bonus = float(state.get("move_speed_bonus", 0.0))
+	_bullet_time_capacity_bonus = float(state.get("bullet_time_capacity_bonus", 0.0))
+	_bullet_time_kill_recharge_bonus = float(state.get("bullet_time_kill_recharge_bonus", 0.0))
+	_heal_on_kill = int(state.get("heal_on_kill", 0))
+	_damage_reduction = int(state.get("damage_reduction", 0))
+	_active_cooldown_multiplier = float(state.get("active_cooldown_multiplier", 1.0))
+	_bonus_bullet_count = int(state.get("bonus_bullet_count", 0))
+	_projectile_speed_bonus = float(state.get("projectile_speed_bonus", 0.0))
 	max_health = int(state.get("max_health", max_health))
 	health = min(int(state.get("health", max_health)), max_health)
-	bullet_time_charge = float(state.get("bullet_time_charge", bullet_time_max_seconds))
+	bullet_time_charge = minf(float(state.get("bullet_time_charge", get_bullet_time_capacity())), get_bullet_time_capacity())
 	active_item_cooldown_remaining = float(state.get("active_item_cooldown_remaining", 0.0))
+	run_elapsed_seconds = float(state.get("run_elapsed_seconds", 0.0))
+	run_score = int(state.get("run_score", 0))
+	run_kill_count = int(state.get("run_kill_count", 0))
 
 	var passive_paths: Array = state.get("passive_paths", [])
 	for path_variant in passive_paths:
@@ -869,9 +952,20 @@ func get_bullet_time_world_scale() -> float:
 		return 1.0
 	return eased
 
-func on_enemy_killed() -> void:
-	bullet_time_charge = minf(bullet_time_max_seconds, bullet_time_charge + bullet_time_kill_recharge_seconds)
+func on_enemy_killed(enemy: Node = null) -> void:
+	bullet_time_charge = minf(get_bullet_time_capacity(), bullet_time_charge + bullet_time_kill_recharge_seconds + _bullet_time_kill_recharge_bonus)
+	if _heal_on_kill > 0:
+		heal(_heal_on_kill)
+	run_kill_count += 1
+	var score_gain: int = 10
+	if enemy != null and "is_boss" in enemy and bool(enemy.get("is_boss")):
+		score_gain = 250
+	elif enemy != null and "max_health" in enemy:
+		score_gain += int(enemy.get("max_health"))
+	run_score += score_gain
 	_update_hud_bullet_time()
+	_update_hud_run_meta()
+	_update_hud_inventory()
 
 func _set_bullet_time_active(active: bool) -> void:
 	if is_bullet_time_active == active:
@@ -886,7 +980,7 @@ func _set_bullet_time_active(active: bool) -> void:
 
 func _update_hud_bullet_time() -> void:
 	if hud != null and hud.has_method("update_bullet_time"):
-		hud.update_bullet_time(bullet_time_charge, bullet_time_max_seconds, is_bullet_time_active or bullet_time_blend > 0.0)
+		hud.update_bullet_time(bullet_time_charge, get_bullet_time_capacity(), is_bullet_time_active or bullet_time_blend > 0.0)
 
 func _update_bullet_time_blend(delta: float) -> void:
 	var target := 0.0
@@ -937,9 +1031,20 @@ func _drop_active_item_on_floor(item: ItemData) -> void:
 	if pickup.has_method("prepare_spawn_protection"):
 		pickup.call("prepare_spawn_protection", 0.12, true)
 	var drop_offset := Vector2(36, -10)
-	var current_scene := get_tree().current_scene
-	if current_scene != null:
-		current_scene.call_deferred("add_child", pickup)
+	var room_parent: Node = null
+	var room_manager := get_tree().get_first_node_in_group("room_manager")
+	if room_manager != null:
+		var room_instance: Node = room_manager.get("current_room_instance")
+		if room_instance != null:
+			room_parent = room_instance
+	if room_parent == null:
+		var room_root := get_tree().get_first_node_in_group("room_root")
+		if room_root != null:
+			room_parent = room_root
+	if room_parent == null:
+		room_parent = get_tree().current_scene
+	if room_parent != null:
+		room_parent.call_deferred("add_child", pickup)
 		if pickup is Node2D:
 			(pickup as Node2D).set_deferred("global_position", global_position + drop_offset)
 
@@ -958,6 +1063,16 @@ func _play_damage_feedback() -> void:
 		_damage_feedback_tween.parallel().tween_property(camera, "offset", Vector2.ZERO, 0.18)
 
 func _spawn_bullet(dir: Vector2) -> void:
+	_spawn_custom_bullet(dir, get_damage_per_shot(), get_projectile_speed_current())
+	if _bonus_bullet_count <= 0:
+		return
+	for index in range(_bonus_bullet_count):
+		var side_sign := -1.0 if index % 2 == 0 else 1.0
+		var ring := int(index / 2) + 1
+		var angle_offset := 0.12 * float(ring) * side_sign
+		_spawn_custom_bullet(dir.rotated(angle_offset), get_damage_per_shot(), get_projectile_speed_current())
+
+func _spawn_custom_bullet(dir: Vector2, custom_damage: int, custom_speed: float) -> void:
 	if bullet_scene == null:
 		return
 	var bullet = bullet_scene.instantiate()
@@ -965,6 +1080,7 @@ func _spawn_bullet(dir: Vector2) -> void:
 		return
 	bullet.global_position = global_position + dir.normalized() * bullet_spawn_offset
 	bullet.direction = dir.normalized()
-	bullet.damage = get_damage_per_shot()
+	bullet.damage = custom_damage
+	bullet.speed = custom_speed
 	bullet.add_to_group("bullet")
 	get_tree().current_scene.add_child(bullet)

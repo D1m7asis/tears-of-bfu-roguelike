@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/item_data.gd" id="1_script"]
-[ext_resource type="Texture2D" path="res://assets/sprites/items/damage_item.svg" id="2_icon"]
+[ext_resource type="Texture2D" path="res://assets/sprites/items/passives/heavy_caliber.svg" id="2_icon"]
 
 [resource]
 script = ExtResource("1_script")
@@ -13,4 +13,5 @@ max_stack = 1
 pickup_kind = "passive_item"
 damage_delta = 3
 attack_speed_delta = -0.8
-display_lines = PackedStringArray("DMG +3", "ATS -0.8")
+projectile_speed_delta = 150.0
+display_lines = PackedStringArray("DMG +3", "SHOT SPD +150", "ATS -0.8")

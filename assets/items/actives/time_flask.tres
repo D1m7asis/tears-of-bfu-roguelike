@@ -11,6 +11,7 @@ icon = ExtResource("2_icon")
 stackable = false
 max_stack = 1
 pickup_kind = "active_item"
+rarity_tier = "common"
 display_lines = PackedStringArray("Fully restores Bullet Time", "Cooldown 16s")
 active_kind = "time_flask"
 active_cooldown_seconds = 16.0

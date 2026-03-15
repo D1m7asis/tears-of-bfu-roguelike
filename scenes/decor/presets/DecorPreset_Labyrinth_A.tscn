@@ -1,27 +1,33 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://bkhn5wdbt2s7i"]
 
 [ext_resource type="PackedScene" path="res://scenes/decor/props/DecorWallChunk.tscn" id="1_wall"]
 [ext_resource type="PackedScene" path="res://scenes/decor/props/DecorBarrel.tscn" id="2_barrel"]
 
-[node name="DecorPresetLabyrinthA" type="Node2D"]
+[node name="DecorPresetLabyrinthA" type="Node2D" unique_id=938617644]
 
-[node name="WallTop" parent="." instance=ExtResource("1_wall")]
-position = Vector2(-120, -150)
+[node name="WallTop" parent="." unique_id=770693804 instance=ExtResource("1_wall")]
+position = Vector2(-353, -169)
 
-[node name="WallTopB" parent="." instance=ExtResource("1_wall")]
-position = Vector2(120, -150)
+[node name="WallTop" parent="WallTop" unique_id=134184868 instance=ExtResource("1_wall")]
+position = Vector2(48, 0)
 
-[node name="WallMidLeft" parent="." instance=ExtResource("1_wall")]
-position = Vector2(-180, -20)
+[node name="WallMidLeft" parent="WallTop" unique_id=778073979 instance=ExtResource("1_wall")]
+position = Vector2(48, 35)
 
-[node name="WallMidRight" parent="." instance=ExtResource("1_wall")]
-position = Vector2(60, -20)
+[node name="WallTopB" parent="." unique_id=766984179 instance=ExtResource("1_wall")]
+position = Vector2(265, -110)
 
-[node name="WallBottom" parent="." instance=ExtResource("1_wall")]
-position = Vector2(-80, 120)
+[node name="WallMidLeft" parent="." unique_id=814282543 instance=ExtResource("1_wall")]
+position = Vector2(-353, -134)
 
-[node name="BarrelLeft" parent="." instance=ExtResource("2_barrel")]
-position = Vector2(180, -146)
+[node name="WallMidRight" parent="." unique_id=454375219 instance=ExtResource("1_wall")]
+position = Vector2(265, 185)
 
-[node name="BarrelBottom" parent="." instance=ExtResource("2_barrel")]
-position = Vector2(174, 116)
+[node name="WallBottom" parent="." unique_id=2054963407 instance=ExtResource("1_wall")]
+position = Vector2(-276, 128)
+
+[node name="BarrelLeft" parent="." unique_id=38403883 instance=ExtResource("2_barrel")]
+position = Vector2(325, -106)
+
+[node name="BarrelBottom" parent="." unique_id=1032146543 instance=ExtResource("2_barrel")]
+position = Vector2(231, 231)

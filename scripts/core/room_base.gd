@@ -43,9 +43,12 @@ var _boss_door_dirs: Dictionary = {}
 var _room_cleared_state: bool = false
 var _reward_type: String = "none"
 var _reward_claimed: bool = false
+var _reward_item_path: String = ""
+var _reward_pickup_present: bool = false
 var _living_enemy_count: int = 0
 var _dead_enemy_ids: Dictionary = {}
 var _enemy_mutations: Array[String] = ["titan", "swift", "brutal", "sniper", "rabid"]
+var _enemy_preset_spawn_count_cache: Dictionary = {}
 
 
 func _ready() -> void:
@@ -65,6 +68,8 @@ func apply_room_data(data: Dictionary) -> void:
 	_room_cleared_state = bool(data.get("cleared", _room_kind == "start"))
 	_reward_type = str(data.get("reward_type", "none"))
 	_reward_claimed = bool(data.get("reward_claimed", false))
+	_reward_item_path = str(data.get("reward_item_path", ""))
+	_reward_pickup_present = bool(data.get("reward_pickup_present", false))
 
 	var door_exists: Dictionary = data.get("doors_exist", {})
 	var door_open: Dictionary = data.get("doors_open", {})
@@ -127,6 +132,12 @@ func on_chest_opened(_chest: Node) -> void:
 	_notify_room_state_changed()
 
 
+func on_room_unloaded() -> void:
+	if _reward_active_pickup != null and is_instance_valid(_reward_active_pickup):
+		_reward_active_pickup.queue_free()
+	_reward_active_pickup = null
+
+
 func _apply_one(door: Node, exists: bool, opened: bool) -> void:
 	if door == null:
 		return
@@ -184,7 +195,7 @@ func _ensure_enemy_layout() -> void:
 	_enemy_layout_generated = true
 	_clear_existing_enemies()
 
-	var preset_scene := _pick_random_scene(enemy_presets_folder)
+	var preset_scene := _pick_enemy_preset_scene()
 	if preset_scene == null:
 		return
 
@@ -238,6 +249,71 @@ func _pick_random_scene(folder_path: String) -> PackedScene:
 
 	var scene_path: String = scene_paths[_rng.randi_range(0, scene_paths.size() - 1)]
 	return load(scene_path) as PackedScene
+
+
+func _pick_enemy_preset_scene() -> PackedScene:
+	var scene_paths := _list_scene_paths(enemy_presets_folder)
+	if scene_paths.is_empty():
+		return null
+
+	var weighted_paths: Array[String] = []
+	var weights: Array[float] = []
+	var total_weight: float = 0.0
+	for scene_path in scene_paths:
+		var spawn_count := _get_enemy_preset_spawn_count(scene_path)
+		var weight := _get_enemy_preset_weight(spawn_count)
+		if weight <= 0.0:
+			continue
+		weighted_paths.append(scene_path)
+		weights.append(weight)
+		total_weight += weight
+
+	if weighted_paths.is_empty() or total_weight <= 0.0:
+		return load(scene_paths[_rng.randi_range(0, scene_paths.size() - 1)]) as PackedScene
+
+	var roll := _rng.randf() * total_weight
+	for index in range(weighted_paths.size()):
+		roll -= weights[index]
+		if roll <= 0.0:
+			return load(weighted_paths[index]) as PackedScene
+
+	return load(weighted_paths[weighted_paths.size() - 1]) as PackedScene
+
+
+func _get_enemy_preset_spawn_count(scene_path: String) -> int:
+	if _enemy_preset_spawn_count_cache.has(scene_path):
+		return int(_enemy_preset_spawn_count_cache[scene_path])
+
+	var scene := load(scene_path) as PackedScene
+	if scene == null:
+		_enemy_preset_spawn_count_cache[scene_path] = 0
+		return 0
+	var instance := scene.instantiate()
+	if instance == null:
+		_enemy_preset_spawn_count_cache[scene_path] = 0
+		return 0
+	var spawn_count := _collect_spawn_points(instance).size()
+	instance.queue_free()
+	_enemy_preset_spawn_count_cache[scene_path] = spawn_count
+	return spawn_count
+
+
+func _get_enemy_preset_weight(spawn_count: int) -> float:
+	if spawn_count <= 0:
+		return 0.0
+	var floor_level: int = max(1, RunStateLib.floor_index)
+	var target_count: float = clampf(2.1 + float(floor_level - 1) * 0.75, 2.1, 6.0)
+	var distance_weight: float = 1.0 / (1.0 + absf(float(spawn_count) - target_count))
+	var weight: float = 0.18 + distance_weight * 2.2
+	if floor_level == 1 and spawn_count > 3:
+		weight *= 0.18
+	elif floor_level == 2 and spawn_count > 4:
+		weight *= 0.55
+	if floor_level >= 3 and spawn_count <= 2:
+		weight *= 0.55
+	if floor_level >= 4 and spawn_count >= 5:
+		weight *= 1.35
+	return maxf(0.02, weight)
 
 
 func _list_scene_paths(folder_path: String) -> Array[String]:
@@ -295,7 +371,7 @@ func _apply_floor_scaling(enemy_instance: Node) -> void:
 			enemy_instance.set("health", scaled_health)
 	if "damage" in enemy_instance:
 		var base_damage: int = int(enemy_instance.get("damage"))
-		var scaled_damage: int = base_damage + max(1, int(round(floor_scale * 0.45 + floor_scale * floor_scale * 0.08)))
+		var scaled_damage: int = base_damage + max(1, int(round(floor_scale * 0.55 + floor_scale * floor_scale * 0.1)))
 		enemy_instance.set("damage", scaled_damage)
 	if "speed" in enemy_instance:
 		var base_speed: float = float(enemy_instance.get("speed"))
@@ -304,7 +380,7 @@ func _apply_floor_scaling(enemy_instance: Node) -> void:
 func _apply_random_enemy_mutation(enemy_instance: Node) -> void:
 	if enemy_instance == null:
 		return
-	if _rng.randf() > enemy_mutation_chance:
+	if _rng.randf() > _get_mutation_chance_for_floor():
 		return
 	if not enemy_instance.has_method("apply_mutation"):
 		return
@@ -312,6 +388,12 @@ func _apply_random_enemy_mutation(enemy_instance: Node) -> void:
 		return
 	var mutation_id: String = _enemy_mutations[_rng.randi_range(0, _enemy_mutations.size() - 1)]
 	enemy_instance.call("apply_mutation", mutation_id)
+
+
+func _get_mutation_chance_for_floor() -> float:
+	var floor_level: int = max(1, RunStateLib.floor_index)
+	var chance: float = 0.035 + float(floor_level - 1) * 0.042
+	return clampf(maxf(chance, enemy_mutation_chance * 0.35), 0.035, 0.42)
 
 
 func _bind_enemy_signals() -> void:
@@ -418,9 +500,18 @@ func _ensure_reward_active_pickup() -> void:
 		return
 	if ITEM_PICKUP_SCENE == null:
 		return
-	var item := LootTableLib.pick_random_active_item(_rng)
+	var item: ItemData = null
+	if _reward_item_path != "":
+		item = load(_reward_item_path) as ItemData
+	if item == null:
+		item = LootTableLib.pick_random_active_item(_rng)
 	if item == null:
 		return
+	_reward_item_path = item.resource_path
+	_reward_pickup_present = true
+	var room_manager := get_tree().get_first_node_in_group("room_manager")
+	if room_manager != null and room_manager.has_method("set_room_reward_item"):
+		room_manager.set_room_reward_item(_room_pos, _reward_item_path)
 	_reward_active_pickup = ITEM_PICKUP_SCENE.instantiate()
 	_reward_active_pickup.set("item_data", item)
 	_reward_active_pickup.set("amount", 1)
@@ -436,6 +527,7 @@ func _remove_reward_active_pickup() -> void:
 	if _reward_active_pickup != null and is_instance_valid(_reward_active_pickup):
 		_reward_active_pickup.queue_free()
 	_reward_active_pickup = null
+	_reward_pickup_present = false
 
 
 func _reward_spawn_position() -> Vector2:
@@ -513,6 +605,7 @@ func _spawn_victory_hatch() -> void:
 
 func _mark_reward_claimed() -> void:
 	_reward_claimed = true
+	_reward_pickup_present = false
 	var room_manager := get_tree().get_first_node_in_group("room_manager")
 	if room_manager != null and room_manager.has_method("mark_room_reward_claimed"):
 		room_manager.mark_room_reward_claimed(_room_pos)

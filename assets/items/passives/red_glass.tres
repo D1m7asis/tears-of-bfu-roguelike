@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/item_data.gd" id="1_script"]
-[ext_resource type="Texture2D" path="res://assets/sprites/items/damage_item.svg" id="2_icon"]
+[ext_resource type="Texture2D" path="res://assets/sprites/items/passives/red_glass.svg" id="2_icon"]
 
 [resource]
 script = ExtResource("1_script")
@@ -12,5 +12,6 @@ stackable = false
 max_stack = 1
 pickup_kind = "passive_item"
 damage_delta = 2
+move_speed_delta = 25.0
 max_health_delta = -1
-display_lines = PackedStringArray("DMG +2", "MAX HP -1")
+display_lines = PackedStringArray("DMG +2", "SPD +25", "MAX HP -1")

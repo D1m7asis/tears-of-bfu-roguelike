@@ -1,16 +1,28 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://cdhhplhje0msq"]
 
 [ext_resource type="PackedScene" path="res://scenes/decor/props/DecorRock.tscn" id="1_rock"]
 [ext_resource type="PackedScene" path="res://scenes/decor/props/DecorBarrel.tscn" id="2_barrel"]
 [ext_resource type="PackedScene" path="res://scenes/decor/props/DecorWallChunk.tscn" id="3_wall"]
 
-[node name="DecorPresetMixed" type="Node2D"]
+[node name="DecorPresetMixed" type="Node2D" unique_id=448140631]
 
-[node name="Rock" parent="." instance=ExtResource("1_rock")]
-position = Vector2(-280, -140)
+[node name="Rock" parent="." unique_id=1683719297 instance=ExtResource("1_rock")]
+position = Vector2(-522, -266)
 
-[node name="Barrel" parent="." instance=ExtResource("2_barrel")]
-position = Vector2(182, 142)
+[node name="Rock" parent="Rock" unique_id=648916561 instance=ExtResource("1_rock")]
+position = Vector2(40, 1)
 
-[node name="Wall" parent="." instance=ExtResource("3_wall")]
-position = Vector2(36, -178)
+[node name="Barrel" parent="." unique_id=390257953 instance=ExtResource("2_barrel")]
+position = Vector2(-133, 178)
+
+[node name="Barrel" parent="Barrel" unique_id=542035174 instance=ExtResource("2_barrel")]
+position = Vector2(33, 0)
+
+[node name="Barrel2" parent="Barrel" unique_id=1798920949 instance=ExtResource("2_barrel")]
+position = Vector2(299, -117)
+
+[node name="Barrel" parent="Barrel/Barrel2" unique_id=1703683546 instance=ExtResource("2_barrel")]
+position = Vector2(33, 0)
+
+[node name="Wall" parent="." unique_id=1474604283 instance=ExtResource("3_wall")]
+position = Vector2(173, -144)

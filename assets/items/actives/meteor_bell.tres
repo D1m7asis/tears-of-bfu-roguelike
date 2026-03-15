@@ -11,6 +11,7 @@ icon = ExtResource("2_icon")
 stackable = false
 max_stack = 1
 pickup_kind = "active_item"
+rarity_tier = "rare"
 display_lines = PackedStringArray("Hits every enemy for 8", "Reliable room soften", "Cooldown 20s")
 active_kind = "meteor_bell"
 active_cooldown_seconds = 20.0

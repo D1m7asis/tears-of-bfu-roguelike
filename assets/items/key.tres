@@ -8,6 +8,5 @@ script = ExtResource("1_42tpf")
 id = "key"
 display_name = "Ключ"
 icon = ExtResource("1_w4f0c")
-stackable = false
-max_stack = 1
+display_lines = null
 metadata/_custom_type_script = "uid://ei4gbmaj8mi6"

@@ -11,6 +11,7 @@ icon = ExtResource("2_icon")
 stackable = false
 max_stack = 1
 pickup_kind = "active_item"
+rarity_tier = "rare"
 display_lines = PackedStringArray("Fires 8 heavy rail shots", "Huge burst damage", "Cooldown 18s")
 active_kind = "rail_hymn"
 active_cooldown_seconds = 18.0

@@ -1,7 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="48" viewBox="0 0 64 48">
-  <ellipse cx="32" cy="38" rx="24" ry="8" fill="#000000" opacity="0.25"/>
-  <ellipse cx="32" cy="28" rx="20" ry="7" fill="#7f776b"/>
-  <path d="M16 28h32v8H16z" fill="#665e54"/>
-  <path d="M20 18h24v10H20z" fill="#958b7f"/>
-  <path d="M24 12h16v6H24z" fill="#b4a99b"/>
+  <ellipse cx="32" cy="39" rx="25" ry="8" fill="#000000" opacity="0.34"/>
+  <ellipse cx="32" cy="29" rx="22" ry="8" fill="#403830"/>
+  <ellipse cx="32" cy="28" rx="20" ry="6.5" fill="#8f8578"/>
+  <ellipse cx="32" cy="27" rx="15" ry="4" fill="#d9cfbf" opacity="0.9"/>
+  <path d="M15 28h34v9H15z" fill="#4d453d"/>
+  <path d="M17 28h30v2H17z" fill="#b6ab9c" opacity="0.7"/>
+  <path d="M20 17h24v11H20z" fill="#8d8376"/>
+  <path d="M22 19h20v3H22z" fill="#d8cfbf" opacity="0.75"/>
+  <path d="M24 11h16v7H24z" fill="#c1b6a8"/>
+  <path d="M26 13h12v2H26z" fill="#f0e6d6" opacity="0.85"/>
+  <path d="M15 28h34M20 17h24M24 11h16" stroke="#2a241f" stroke-width="1.4" fill="none"/>
 </svg>

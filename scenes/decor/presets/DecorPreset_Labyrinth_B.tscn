@@ -6,22 +6,22 @@
 [node name="DecorPresetLabyrinthB" type="Node2D" unique_id=1047603869]
 
 [node name="WallUpperLeft" parent="." unique_id=1141007734 instance=ExtResource("1_wall")]
-position = Vector2(-190, -120)
+position = Vector2(-312, -160)
 
 [node name="WallUpperRight" parent="." unique_id=1283689645 instance=ExtResource("1_wall")]
-position = Vector2(40, -120)
+position = Vector2(211, -180)
 
 [node name="WallCenter" parent="." unique_id=1929275145 instance=ExtResource("1_wall")]
-position = Vector2(-70, 10)
+position = Vector2(-299, -134)
 
 [node name="WallLowerLeft" parent="." unique_id=1348174489 instance=ExtResource("1_wall")]
-position = Vector2(-200, 138)
+position = Vector2(-350, 206)
 
 [node name="WallLowerRight" parent="." unique_id=543136782 instance=ExtResource("1_wall")]
-position = Vector2(74, 149)
+position = Vector2(227, 324)
 
 [node name="RockA" parent="." unique_id=381832566 instance=ExtResource("2_rock")]
-position = Vector2(184, -110)
+position = Vector2(355, -170)
 
 [node name="RockB" parent="." unique_id=1864048296 instance=ExtResource("2_rock")]
-position = Vector2(190, 132)
+position = Vector2(438, 238)

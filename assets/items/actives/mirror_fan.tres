@@ -11,6 +11,7 @@ icon = ExtResource("2_icon")
 stackable = false
 max_stack = 1
 pickup_kind = "active_item"
+rarity_tier = "uncommon"
 display_lines = PackedStringArray("Fires 24-way burst", "Covers the whole screen", "Cooldown 14s")
 active_kind = "mirror_fan"
 active_cooldown_seconds = 14.0

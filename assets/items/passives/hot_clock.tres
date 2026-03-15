@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/item_data.gd" id="1_script"]
-[ext_resource type="Texture2D" path="res://assets/sprites/items/firerate_item.svg" id="2_icon"]
+[ext_resource type="Texture2D" path="res://assets/sprites/items/passives/hot_clock.svg" id="2_icon"]
 
 [resource]
 script = ExtResource("1_script")
@@ -11,6 +11,6 @@ icon = ExtResource("2_icon")
 stackable = false
 max_stack = 1
 pickup_kind = "passive_item"
-attack_speed_delta = 1.0
-max_health_delta = -1
-display_lines = PackedStringArray("ATS +1.0", "MAX HP -1")
+attack_speed_delta = 0.8
+active_cooldown_multiplier = 0.82
+display_lines = PackedStringArray("ATS +0.8", "ACTIVE CD x0.82")

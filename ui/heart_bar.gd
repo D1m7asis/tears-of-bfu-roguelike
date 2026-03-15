@@ -29,18 +29,37 @@ func _draw() -> void:
 		return
 
 	for heart_index in range(heart_count):
-		var heart_rect := Rect2(Vector2(heart_index * (heart_size.x + heart_gap), 0.0), heart_size)
+		var max_units_for_heart := 2
+		if heart_index == heart_count - 1 and _max_health % 2 != 0:
+			max_units_for_heart = 1
+		var slot_width := heart_size.x
+		if max_units_for_heart == 1:
+			slot_width = heart_size.x * 0.5
+		var heart_rect := Rect2(Vector2(_slot_x_for_index(heart_index), 0.0), Vector2(slot_width, heart_size.y))
 		var fill_units := clampi(_current_health - heart_index * 2, 0, 2)
-		_draw_heart(heart_rect, texture_size, fill_units)
+		_draw_heart(heart_rect, texture_size, fill_units, max_units_for_heart)
 
-
-func _draw_heart(heart_rect: Rect2, texture_size: Vector2, fill_units: int) -> void:
-	draw_texture_rect(HEART_TEXTURE, heart_rect, false, EMPTY_COLOR)
+func _draw_heart(heart_rect: Rect2, texture_size: Vector2, fill_units: int, max_units_for_heart: int) -> void:
+	if max_units_for_heart <= 1:
+		draw_texture_rect_region(
+			HEART_TEXTURE,
+			heart_rect,
+			Rect2(Vector2.ZERO, Vector2(texture_size.x * 0.5, texture_size.y)),
+			EMPTY_COLOR,
+			false
+		)
+	else:
+		draw_texture_rect(HEART_TEXTURE, heart_rect, false, EMPTY_COLOR)
 
 	if fill_units <= 0:
 		return
 
-	if fill_units >= 2:
+	if fill_units >= max_units_for_heart:
+		if max_units_for_heart <= 1:
+			var full_half_rect := heart_rect
+			var full_half_region := Rect2(Vector2.ZERO, Vector2(texture_size.x * 0.5, texture_size.y))
+			draw_texture_rect_region(HEART_TEXTURE, full_half_rect, full_half_region, FULL_COLOR, false)
+			return
 		draw_texture_rect(HEART_TEXTURE, heart_rect, false, FULL_COLOR)
 		return
 
@@ -55,7 +74,26 @@ func _update_minimum_size() -> void:
 		custom_minimum_size = Vector2.ZERO
 		return
 
+	var total_width := 0.0
+	for heart_index in range(heart_count):
+		var slot_width := heart_size.x
+		if heart_index == heart_count - 1 and _max_health % 2 != 0:
+			slot_width = heart_size.x * 0.5
+		total_width += slot_width
+		if heart_index < heart_count - 1:
+			total_width += heart_gap
+
 	custom_minimum_size = Vector2(
-		heart_count * heart_size.x + max(heart_count - 1, 0) * heart_gap,
+		total_width,
 		heart_size.y
 	)
+
+
+func _slot_x_for_index(heart_index: int) -> float:
+	var pos_x := 0.0
+	for index in range(heart_index):
+		var slot_width := heart_size.x
+		if index == int(ceil(float(_max_health) / 2.0)) - 1 and _max_health % 2 != 0:
+			slot_width = heart_size.x * 0.5
+		pos_x += slot_width + heart_gap
+	return pos_x

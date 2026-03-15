@@ -11,6 +11,7 @@ icon = ExtResource("2_icon")
 stackable = false
 max_stack = 1
 pickup_kind = "active_item"
+rarity_tier = "uncommon"
 display_lines = PackedStringArray("Heal 2 and become invulnerable", "Short panic button", "Cooldown 24s")
 active_kind = "iron_choir"
 active_cooldown_seconds = 24.0

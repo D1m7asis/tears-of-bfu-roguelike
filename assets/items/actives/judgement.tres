@@ -11,6 +11,7 @@ icon = ExtResource("2_icon")
 stackable = false
 max_stack = 1
 pickup_kind = "active_item"
+rarity_tier = "legendary"
 display_lines = PackedStringArray("Erases every enemy in the room", "One-use room wipe", "Cooldown 60s")
 active_kind = "judgement"
 active_cooldown_seconds = 60.0

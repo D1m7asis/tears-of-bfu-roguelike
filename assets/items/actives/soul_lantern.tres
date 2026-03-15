@@ -11,6 +11,7 @@ icon = ExtResource("2_icon")
 stackable = false
 max_stack = 1
 pickup_kind = "active_item"
+rarity_tier = "uncommon"
 display_lines = PackedStringArray("Heal 1, gain 1s focus", "Fires radiant burst", "Cooldown 17s")
 active_kind = "soul_lantern"
 active_cooldown_seconds = 17.0
