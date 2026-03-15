@@ -58,6 +58,7 @@ var _mutation_id: String = ""
 var _mutation_tint: Color = Color.WHITE
 var _phase_tint: Color = Color.WHITE
 var _alive_modulate: Color = Color.WHITE
+var _stasis_time_remaining: float = 0.0
 
 func _ready():
 	player = get_tree().get_first_node_in_group("player")
@@ -69,6 +70,13 @@ func _ready():
 func _physics_process(delta):
 	if player == null or is_dead or not is_active:
 		velocity = Vector2.ZERO
+		return
+	if _stasis_time_remaining > 0.0:
+		_stasis_time_remaining = maxf(0.0, _stasis_time_remaining - delta)
+		velocity = Vector2.ZERO
+		move_and_slide()
+		if _stasis_time_remaining <= 0.0:
+			_refresh_alive_modulate()
 		return
 
 	var world_scale: float = 1.0
@@ -97,7 +105,7 @@ func _physics_process(delta):
 	_attempt_contact_damage()
 
 func _attempt_contact_damage() -> void:
-	if damage_area == null or not can_attack or is_dead or not is_active:
+	if damage_area == null or not can_attack or is_dead or not is_active or _stasis_time_remaining > 0.0:
 		return
 
 	for body in damage_area.get_overlapping_bodies():
@@ -125,7 +133,7 @@ func _start_attack_cooldown() -> void:
 		can_attack = true
 
 func _on_damage_area_body_entered(body):
-	if is_active and can_attack and _can_damage_body(body):
+	if is_active and can_attack and _stasis_time_remaining <= 0.0 and _can_damage_body(body):
 		_deal_contact_damage(body)
 
 
@@ -341,6 +349,12 @@ func set_active(active: bool) -> void:
 	is_active = active
 	if not active:
 		velocity = Vector2.ZERO
+
+
+func apply_stasis(duration: float) -> void:
+	_stasis_time_remaining = maxf(_stasis_time_remaining, duration)
+	velocity = Vector2.ZERO
+	modulate = Color(0.66, 0.9, 1.0, 1.0)
 
 func apply_mutation(mutation_id: String) -> void:
 	_mutation_id = mutation_id

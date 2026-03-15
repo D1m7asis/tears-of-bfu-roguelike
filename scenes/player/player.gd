@@ -86,7 +86,6 @@ var _berserk_cast_id: int = 0
 var _phase_cloak_cast_id: int = 0
 var _blood_pact_cast_id: int = 0
 var _iron_choir_cast_id: int = 0
-var _stasis_cast_id: int = 0
 var _speed_boost_cast_id: int = 0
 var _temporary_speed_bonus: float = 0.0
 var _damage_feedback_tween: Tween = null
@@ -560,21 +559,11 @@ func _end_iron_choir(cast_id: int) -> void:
 	modulate = Color.WHITE
 
 func _active_stasis_mine() -> void:
-	_stasis_cast_id += 1
 	for enemy in _get_current_room_enemies():
-		if enemy.has_method("set_active"):
-			enemy.set_active(false)
+		if enemy.has_method("apply_stasis"):
+			enemy.apply_stasis(2.6)
 		if enemy.has_method("take_damage"):
 			enemy.take_damage(2)
-	call_deferred("_end_stasis_mine", _stasis_cast_id)
-
-func _end_stasis_mine(cast_id: int) -> void:
-	await get_tree().create_timer(2.6).timeout
-	if cast_id != _stasis_cast_id:
-		return
-	for enemy in _get_current_room_enemies():
-		if enemy.has_method("set_active"):
-			enemy.set_active(true)
 
 func _active_soul_lantern() -> void:
 	heal(1)
