@@ -5,6 +5,7 @@ const CHEST_SCENE = preload("res://scenes/ui/Chest.tscn")
 const LootTableLib = preload("res://scripts/core/loot_tables.gd")
 const ITEM_PICKUP_SCENE = preload("res://scenes/ItemPickup.tscn")
 const RunStateLib = preload("res://scripts/core/run_state.gd")
+const ResourceRegistryLib = preload("res://scripts/core/resource_registry.gd")
 
 signal room_cleared(pos: Vector2i)
 
@@ -243,59 +244,81 @@ func _clear_existing_enemies() -> void:
 
 
 func _pick_random_scene(folder_path: String) -> PackedScene:
-	var scene_paths := _list_scene_paths(folder_path)
-	if scene_paths.is_empty():
+	var scene_pool: Array[PackedScene] = _get_scene_pool_for_folder(folder_path)
+	if scene_pool.is_empty():
 		return null
-
-	var scene_path: String = scene_paths[_rng.randi_range(0, scene_paths.size() - 1)]
-	return load(scene_path) as PackedScene
+	return scene_pool[_rng.randi_range(0, scene_pool.size() - 1)]
 
 
 func _pick_enemy_preset_scene() -> PackedScene:
-	var scene_paths := _list_scene_paths(enemy_presets_folder)
-	if scene_paths.is_empty():
+	var scene_pool: Array[PackedScene] = _get_scene_pool_for_folder(enemy_presets_folder)
+	if scene_pool.is_empty():
 		return null
 
-	var weighted_paths: Array[String] = []
+	var weighted_scenes: Array[PackedScene] = []
 	var weights: Array[float] = []
 	var total_weight: float = 0.0
-	for scene_path in scene_paths:
-		var spawn_count := _get_enemy_preset_spawn_count(scene_path)
+	for scene in scene_pool:
+		var spawn_count := _get_enemy_preset_spawn_count(scene)
 		var weight := _get_enemy_preset_weight(spawn_count)
 		if weight <= 0.0:
 			continue
-		weighted_paths.append(scene_path)
+		weighted_scenes.append(scene)
 		weights.append(weight)
 		total_weight += weight
 
-	if weighted_paths.is_empty() or total_weight <= 0.0:
-		return load(scene_paths[_rng.randi_range(0, scene_paths.size() - 1)]) as PackedScene
+	if weighted_scenes.is_empty() or total_weight <= 0.0:
+		return scene_pool[_rng.randi_range(0, scene_pool.size() - 1)]
 
 	var roll := _rng.randf() * total_weight
-	for index in range(weighted_paths.size()):
+	for index in range(weighted_scenes.size()):
 		roll -= weights[index]
 		if roll <= 0.0:
-			return load(weighted_paths[index]) as PackedScene
+			return weighted_scenes[index]
 
-	return load(weighted_paths[weighted_paths.size() - 1]) as PackedScene
+	return weighted_scenes[weighted_scenes.size() - 1]
 
 
-func _get_enemy_preset_spawn_count(scene_path: String) -> int:
-	if _enemy_preset_spawn_count_cache.has(scene_path):
-		return int(_enemy_preset_spawn_count_cache[scene_path])
-
-	var scene := load(scene_path) as PackedScene
+func _get_enemy_preset_spawn_count(scene: PackedScene) -> int:
 	if scene == null:
-		_enemy_preset_spawn_count_cache[scene_path] = 0
+		return 0
+	var scene_key: String = scene.resource_path
+	if _enemy_preset_spawn_count_cache.has(scene_key):
+		return int(_enemy_preset_spawn_count_cache[scene_key])
+
+	if scene == null:
+		_enemy_preset_spawn_count_cache[scene_key] = 0
 		return 0
 	var instance := scene.instantiate()
 	if instance == null:
-		_enemy_preset_spawn_count_cache[scene_path] = 0
+		_enemy_preset_spawn_count_cache[scene_key] = 0
 		return 0
 	var spawn_count := _collect_spawn_points(instance).size()
 	instance.queue_free()
-	_enemy_preset_spawn_count_cache[scene_path] = spawn_count
+	_enemy_preset_spawn_count_cache[scene_key] = spawn_count
 	return spawn_count
+
+
+func _get_scene_pool_for_folder(folder_path: String) -> Array[PackedScene]:
+	match folder_path:
+		enemy_variants_folder:
+			return ResourceRegistryLib.get_enemy_variant_scenes()
+		enemy_presets_folder:
+			return ResourceRegistryLib.get_enemy_preset_scenes()
+		boss_variants_folder:
+			return ResourceRegistryLib.get_boss_scenes()
+		decor_presets_folder:
+			return ResourceRegistryLib.get_decor_preset_scenes()
+		_:
+			if folder_path == "" and _room_kind == "boss":
+				return []
+			var scene_paths := _list_scene_paths(folder_path)
+			var scenes: Array[PackedScene] = []
+			for scene_path in scene_paths:
+				var scene := load(scene_path) as PackedScene
+				if scene != null:
+					scenes.append(scene)
+			return scenes
 
 
 func _get_enemy_preset_weight(spawn_count: int) -> float:

@@ -6,13 +6,25 @@ const PLAYER_BASE_TEXTURE = preload("res://assets/sprites/player/player.png")
 const PLAYER_NEO_TEXTURE = preload("res://assets/sprites/player/player_neo.png")
 const KEY_ITEM_DATA = preload("res://assets/items/key.tres")
 const ITEM_PICKUP_SCENE = preload("res://scenes/ItemPickup.tscn")
+const KEY_W_PHYSICAL: Key = 87
+const KEY_A_PHYSICAL: Key = 65
+const KEY_S_PHYSICAL: Key = 83
+const KEY_D_PHYSICAL: Key = 68
+const KEY_Q_PHYSICAL: Key = 81
+const KEY_E_PHYSICAL: Key = 69
+const KEY_R_PHYSICAL: Key = 82
+const KEY_SHIFT_PHYSICAL: Key = 4194325
+const KEY_ARROW_LEFT_PHYSICAL: Key = 4194319
+const KEY_ARROW_UP_PHYSICAL: Key = 4194320
+const KEY_ARROW_RIGHT_PHYSICAL: Key = 4194321
+const KEY_ARROW_DOWN_PHYSICAL: Key = 4194322
 
 @export var speed: float = 300.0
 @export var base_damage: int = 1
 @export var base_attack_speed: float = 3.33
 @export var base_projectile_speed: float = 600.0
 
-@onready var bullet_scene: PackedScene = preload("res://scenes/player/bullet.tscn")
+@onready var bullet_scene: PackedScene = preload("res://scenes/player/Bullet.tscn")
 var can_shoot: bool = true
 @export var bullet_spawn_offset: float = 55.0
 
@@ -78,6 +90,8 @@ var _stasis_cast_id: int = 0
 var _speed_boost_cast_id: int = 0
 var _temporary_speed_bonus: float = 0.0
 var _damage_feedback_tween: Tween = null
+var _physical_key_previous_state: Dictionary = {}
+var _room_transition_watchdog: float = 0.0
 var run_elapsed_seconds: float = 0.0
 var run_score: int = 0
 var run_kill_count: int = 0
@@ -104,22 +118,29 @@ func _physics_process(_delta: float) -> void:
 	if get_tree().paused:
 		velocity = Vector2.ZERO
 		return
-	if is_dying or is_room_transitioning:
+	if is_dying:
 		velocity = Vector2.ZERO
 		return
+	if is_room_transitioning:
+		_room_transition_watchdog += _delta
+		if _room_transition_watchdog >= 2.5:
+			end_room_transition()
+		velocity = Vector2.ZERO
+		return
+	_room_transition_watchdog = 0.0
 
 	var direction := Vector2.ZERO
 
-	if Input.is_action_pressed("move_right"):
+	if _is_action_or_key_pressed("move_right", KEY_D_PHYSICAL):
 		rotation_degrees += 5
 		direction.x += 1
-	if Input.is_action_pressed("move_left"):
+	if _is_action_or_key_pressed("move_left", KEY_A_PHYSICAL):
 		rotation_degrees -= 5
 		direction.x -= 1
-	if Input.is_action_pressed("move_down"):
+	if _is_action_or_key_pressed("move_down", KEY_S_PHYSICAL):
 		rotation_degrees -= 2
 		direction.y += 1
-	if Input.is_action_pressed("move_up"):
+	if _is_action_or_key_pressed("move_up", KEY_W_PHYSICAL):
 		rotation_degrees += 2
 		direction.y -= 1
 
@@ -131,11 +152,18 @@ func _process(delta: float) -> void:
 	if get_tree().paused:
 		_set_bullet_time_active(false)
 		return
-	if Input.is_action_just_pressed("inventory"):
+	if _is_action_or_key_just_pressed("inventory", KEY_Q_PHYSICAL):
 		_toggle_inventory()
-	if is_dying or is_room_transitioning:
+	if is_dying:
 		_set_bullet_time_active(false)
 		return
+	if is_room_transitioning:
+		_room_transition_watchdog += delta
+		if _room_transition_watchdog >= 2.5:
+			end_room_transition()
+		_set_bullet_time_active(false)
+		return
+	_room_transition_watchdog = 0.0
 	run_elapsed_seconds += delta
 
 	if door_lock_time > 0.0:
@@ -143,7 +171,7 @@ func _process(delta: float) -> void:
 	if active_item_cooldown_remaining > 0.0:
 		active_item_cooldown_remaining = maxf(0.0, active_item_cooldown_remaining - delta)
 
-	if Input.is_action_pressed("bullet_time") and bullet_time_charge > 0.0:
+	if _is_action_or_key_pressed("bullet_time", KEY_SHIFT_PHYSICAL) and bullet_time_charge > 0.0:
 		_set_bullet_time_active(true)
 	else:
 		_set_bullet_time_active(false)
@@ -158,10 +186,10 @@ func _process(delta: float) -> void:
 	var shoot_direction := _get_held_shoot_direction()
 	if shoot_direction != Vector2.ZERO:
 		shoot(shoot_direction)
-	if Input.is_action_just_pressed("active_item"):
+	if _is_action_or_key_just_pressed("active_item", KEY_E_PHYSICAL):
 		use_active_item()
 
-	if Input.is_action_pressed("restart_hold"):
+	if _is_action_or_key_pressed("restart_hold", KEY_R_PHYSICAL):
 		restart_hold_time += delta
 		if restart_overlay != null:
 			restart_overlay.set_visible_active(true)
@@ -192,15 +220,29 @@ func shoot(dir: Vector2) -> void:
 	can_shoot = true
 
 func _get_held_shoot_direction() -> Vector2:
-	if Input.is_action_pressed("shoot_right"):
+	if _is_action_or_key_pressed("shoot_right", KEY_ARROW_RIGHT_PHYSICAL):
 		return Vector2.RIGHT
-	if Input.is_action_pressed("shoot_left"):
+	if _is_action_or_key_pressed("shoot_left", KEY_ARROW_LEFT_PHYSICAL):
 		return Vector2.LEFT
-	if Input.is_action_pressed("shoot_up"):
+	if _is_action_or_key_pressed("shoot_up", KEY_ARROW_UP_PHYSICAL):
 		return Vector2.UP
-	if Input.is_action_pressed("shoot_down"):
+	if _is_action_or_key_pressed("shoot_down", KEY_ARROW_DOWN_PHYSICAL):
 		return Vector2.DOWN
 	return Vector2.ZERO
+
+
+func _is_action_or_key_pressed(action_name: String, physical_key: Key) -> bool:
+	return Input.is_action_pressed(action_name) or Input.is_physical_key_pressed(physical_key)
+
+
+func _is_action_or_key_just_pressed(action_name: String, physical_key: Key) -> bool:
+	if Input.is_action_just_pressed(action_name):
+		_physical_key_previous_state[physical_key] = true
+		return true
+	var is_pressed: bool = Input.is_physical_key_pressed(physical_key)
+	var was_pressed: bool = bool(_physical_key_previous_state.get(physical_key, false))
+	_physical_key_previous_state[physical_key] = is_pressed
+	return is_pressed and not was_pressed
 
 func add_item(item: ItemData, amount: int = 1) -> bool:
 	if item == null or amount <= 0:
@@ -885,6 +927,7 @@ func can_use_doors() -> bool:
 
 func begin_room_transition(exit_dir: int) -> void:
 	is_room_transitioning = true
+	_room_transition_watchdog = 0.0
 	_set_bullet_time_active(false)
 	velocity = Vector2.ZERO
 
@@ -902,6 +945,7 @@ func begin_room_transition(exit_dir: int) -> void:
 
 func end_room_transition() -> void:
 	is_room_transitioning = false
+	_room_transition_watchdog = 0.0
 	velocity = Vector2.ZERO
 
 func play_room_arrival_effect(_entered_from: int) -> void:

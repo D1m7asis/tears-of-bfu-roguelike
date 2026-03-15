@@ -1,6 +1,7 @@
 extends AudioStreamPlayer
 
 const SettingsStoreLib = preload("res://scripts/core/settings_store.gd")
+const ResourceRegistryLib = preload("res://scripts/core/resource_registry.gd")
 
 @export var music_folder: String = "res://assets/audio/music"
 @export var music_volume_db: float = -18.0
@@ -13,8 +14,8 @@ const BULLET_TIME_PITCH_SCALE: float = 0.88
 const BULLET_TIME_TRANSITION_DURATION: float = 0.28
 
 var _generator_playback: AudioStreamGeneratorPlayback = null
-var _tracks: Array[String] = []
-var _current_track_path: String = ""
+var _tracks: Array[AudioStream] = []
+var _current_track_index: int = -1
 var _rng := RandomNumberGenerator.new()
 var _pitch_tween: Tween = null
 
@@ -41,49 +42,37 @@ func _process(_delta: float) -> void:
 
 func _reload_tracks() -> void:
 	_tracks.clear()
-
-	var dir := DirAccess.open(music_folder)
-	if dir == null:
-		return
-
-	dir.list_dir_begin()
-	while true:
-		var file_name := dir.get_next()
-		if file_name == "":
-			break
-		if dir.current_is_dir():
-			continue
-		if file_name.ends_with(".import"):
-			continue
-
-		var extension := file_name.get_extension().to_lower()
-		if extension in SUPPORTED_EXTENSIONS:
-			_tracks.append(music_folder.path_join(file_name))
-	dir.list_dir_end()
+	for track in ResourceRegistryLib.get_music_tracks():
+		if track != null:
+			_tracks.append(track)
 
 func _play_random_track() -> void:
 	if _tracks.is_empty():
 		_setup_silent_fallback()
 		return
 
-	var candidates := _tracks.duplicate()
-	if candidates.size() > 1 and _current_track_path != "":
-		candidates.erase(_current_track_path)
+	var candidate_indices: Array[int] = []
+	for index in range(_tracks.size()):
+		if _tracks.size() > 1 and index == _current_track_index:
+			continue
+		candidate_indices.append(index)
+	if candidate_indices.is_empty():
+		candidate_indices.append(0)
 
-	var next_track_path: String = candidates[_rng.randi_range(0, candidates.size() - 1)]
-	var next_stream := load(next_track_path) as AudioStream
+	var next_index: int = candidate_indices[_rng.randi_range(0, candidate_indices.size() - 1)]
+	var next_stream: AudioStream = _tracks[next_index]
 	if next_stream == null:
-		_tracks.erase(next_track_path)
+		_tracks.remove_at(next_index)
 		_play_random_track()
 		return
 
-	_current_track_path = next_track_path
+	_current_track_index = next_index
 	_generator_playback = null
 	stream = next_stream
 	play()
 
 func _setup_silent_fallback() -> void:
-	_current_track_path = ""
+	_current_track_index = -1
 	var silent_stream := AudioStreamGenerator.new()
 	silent_stream.mix_rate = 44100.0
 	silent_stream.buffer_length = 0.5
