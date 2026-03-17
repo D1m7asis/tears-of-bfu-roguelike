@@ -152,16 +152,23 @@ func load_room(pos: Vector2i, entered_from: int) -> void:
 	if not map.has(pos):
 		return
 
+	var previous_pos: Vector2i = current_pos
+	var previous_room_instance: Node = current_room_instance
 	var room_data: Dictionary = map[pos]
 	current_pos = pos
 	room_data["visited"] = true
 	map[pos] = room_data
 	emit_signal("room_loaded", pos)
 
-	if current_room_instance != null and current_room_instance.get_parent() == room_root:
-		if current_room_instance.has_method("on_room_unloaded"):
-			current_room_instance.on_room_unloaded()
-		room_root.remove_child(current_room_instance)
+	if previous_room_instance != null:
+		if previous_room_instance.has_method("on_room_unloaded"):
+			previous_room_instance.on_room_unloaded()
+		if previous_room_instance.get_parent() == room_root:
+			room_root.remove_child(previous_room_instance)
+		if previous_pos != pos:
+			if map.has(previous_pos):
+				map[previous_pos]["instance"] = null
+			previous_room_instance.queue_free()
 	current_room_instance = null
 
 	var room_instance: Node = room_data.get("instance", null)
