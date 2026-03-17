@@ -3,7 +3,7 @@
 [node name="EnemyPresetRing" type="Node2D"]
 
 [node name="SlotA" type="Marker2D" parent="."]
-position = Vector2(-250, 0)
+position = Vector2(-250, -125)
 
 [node name="SlotB" type="Marker2D" parent="."]
 position = Vector2(-140, -150)
@@ -12,7 +12,7 @@ position = Vector2(-140, -150)
 position = Vector2(140, -150)
 
 [node name="SlotD" type="Marker2D" parent="."]
-position = Vector2(250, 0)
+position = Vector2(250, -125)
 
 [node name="SlotE" type="Marker2D" parent="."]
 position = Vector2(140, 150)

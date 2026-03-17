@@ -70,18 +70,18 @@ theme_override_constants/separation = 14
 [node name="Title" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 40
-text = "VICTORY"
+text = "ПОБЕДА"
 horizontal_alignment = 1
 
 [node name="Subtitle" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "The boss is down. The hatch is open. You made it out."
+text = "Босс повержен. Люк открыт. Ты выбрался."
 horizontal_alignment = 1
 autowrap_mode = 3
 
 [node name="Prompt" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
-text = "Press Enter or hold R to start a new run"
+text = "Enter или удержание R - заново, Esc - назад в меню"
 horizontal_alignment = 1

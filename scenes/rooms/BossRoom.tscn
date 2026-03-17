@@ -7326,4 +7326,4 @@ position = Vector2(0, 0)
 position = Vector2(0, 0)
 
 [node name="HatchSpawn" type="Marker2D" parent="."]
-position = Vector2(0, 110)
+position = Vector2(0, 0)

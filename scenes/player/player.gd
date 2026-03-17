@@ -19,7 +19,7 @@ const KEY_ARROW_UP_PHYSICAL: Key = 4194320
 const KEY_ARROW_RIGHT_PHYSICAL: Key = 4194321
 const KEY_ARROW_DOWN_PHYSICAL: Key = 4194322
 
-@export var speed: float = 300.0
+@export var speed: float = 325.0
 @export var base_damage: int = 1
 @export var base_attack_speed: float = 3.33
 @export var base_projectile_speed: float = 600.0
@@ -572,7 +572,7 @@ func _active_soul_lantern() -> void:
 	_spawn_burst(12, 1.0, 1.6)
 
 func get_active_item_name() -> String:
-	return "" if active_item == null else active_item.display_name
+	return "" if active_item == null else active_item.get_localized_name()
 
 func _damage_all_enemies(amount: int) -> void:
 	for enemy in _get_current_room_enemies():
@@ -694,7 +694,7 @@ func win_at_hatch(hatch_global_position: Vector2) -> void:
 	velocity = Vector2.ZERO
 	_set_bullet_time_active(false)
 	if hud != null and hud.has_method("play_cinematic_banner"):
-		hud.play_cinematic_banner("DESCENDING...", 0.42)
+		hud.play_cinematic_banner("СПУСК...", 0.42)
 	var tween := create_tween()
 	tween.set_trans(Tween.TRANS_SINE)
 	tween.set_ease(Tween.EASE_IN)
@@ -790,7 +790,7 @@ func _update_pickup_hint() -> void:
 
 func _go_to_next_floor() -> void:
 	if hud != null and hud.has_method("play_cinematic_banner"):
-		await hud.play_cinematic_banner("BASEMENT %d" % [RunStateLib.floor_index], 1.6)
+		await hud.play_cinematic_banner("ПОДВАЛ %d" % [RunStateLib.floor_index], 1.6)
 	_resolve_screen_fader()
 	if screen_fader != null and screen_fader.has_method("fade_to_black"):
 		await screen_fader.fade_to_black(0.55)
@@ -803,7 +803,7 @@ func play_boss_room_intro() -> void:
 	if screen_fader != null and screen_fader.has_method("set_black_instant"):
 		screen_fader.set_black_instant(0.38)
 	if hud != null and hud.has_method("play_cinematic_banner"):
-		hud.play_cinematic_banner("THE BOSS AWAITS", 1.15)
+		hud.play_cinematic_banner("БОСС ЖДЁТ", 1.15)
 	if screen_fader != null and screen_fader.has_method("fade_from_black"):
 		await screen_fader.fade_from_black(0.32)
 	if camera != null:
@@ -829,7 +829,7 @@ func play_floor_spawn_intro(floor_number: int) -> void:
 	if screen_fader != null and screen_fader.has_method("set_black_instant"):
 		screen_fader.set_black_instant(1.0)
 	if hud != null and hud.has_method("play_cinematic_banner"):
-		await hud.play_cinematic_banner("BASEMENT %d" % [floor_number], 2.9)
+		await hud.play_cinematic_banner("ПОДВАЛ %d" % [floor_number], 2.9)
 	if screen_fader != null and screen_fader.has_method("fade_from_black"):
 		await screen_fader.fade_from_black(0.95)
 	if camera != null:

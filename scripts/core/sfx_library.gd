@@ -60,7 +60,7 @@ static func play_item_pickup(source: Node, item_data: ItemData, volume_db: float
 		return
 	_play(source, "passive_pickup", volume_db)
 
-static func play_player_hurt(source: Node, volume_db: float = -4.0) -> void:
+static func play_player_hurt(source: Node, volume_db: float = -1.8) -> void:
 	_play(source, "player_hurt", volume_db)
 
 static func _play(source: Node, kind: String, volume_db: float) -> void:
@@ -129,8 +129,47 @@ static func _build_fallback_stream(kind: String) -> AudioStreamWAV:
 	if kind == "passive_pickup":
 		return _generate_tone_stream(520.0, 0.22, 0.26, 1040.0, 0.0)
 	if kind == "player_hurt":
-		return _generate_tone_stream(240.0, 0.18, 0.28, 120.0, 0.14)
+		return _generate_player_hurt_stream()
 	return _generate_tone_stream(880.0, 0.07, 0.20, 0.0, 0.0)
+
+
+static func _generate_player_hurt_stream() -> AudioStreamWAV:
+	var sample_rate := 24000
+	var duration := 0.12
+	var sample_count := int(duration * sample_rate)
+	var data := PackedByteArray()
+	data.resize(sample_count * 2)
+
+	var phase_a := 0.0
+	var phase_b := 0.0
+	for i in range(sample_count):
+		var t := float(i) / float(sample_rate)
+		var normalized_t := float(i) / float(sample_count)
+		var primary_env := pow(maxf(0.0, 1.0 - normalized_t * 1.4), 3.0)
+		var click_env := maxf(0.0, 1.0 - t / 0.016)
+		var second_pulse := maxf(0.0, 1.0 - absf(t - 0.032) / 0.018)
+
+		var freq_a := lerpf(710.0, 320.0, normalized_t)
+		var freq_b := lerpf(1180.0, 520.0, normalized_t)
+		phase_a += TAU * freq_a / sample_rate
+		phase_b += TAU * freq_b / sample_rate
+
+		var sample := sin(phase_a) * 0.22 * primary_env
+		sample += sin(phase_b) * 0.12 * primary_env
+		sample += randf_range(-1.0, 1.0) * 0.24 * click_env
+		sample += randf_range(-1.0, 1.0) * 0.10 * second_pulse
+		sample += sin(phase_b * 1.15) * 0.08 * second_pulse
+
+		var pcm_value := int(clampf(sample, -1.0, 1.0) * 32767.0)
+		data[i * 2] = pcm_value & 0xFF
+		data[i * 2 + 1] = (pcm_value >> 8) & 0xFF
+
+	var stream := AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+	stream.mix_rate = sample_rate
+	stream.stereo = false
+	stream.data = data
+	return stream
 
 static func _generate_tone_stream(start_freq: float, duration: float, amplitude: float, end_freq: float, noise_mix: float) -> AudioStreamWAV:
 	var sample_rate := 22050

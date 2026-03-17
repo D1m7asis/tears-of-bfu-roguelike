@@ -75,8 +75,8 @@ func get_interaction_hint() -> String:
 		return ""
 	var player := get_tree().get_first_node_in_group("player")
 	if player != null and player.has_method("has_item_id") and player.has_item_id("key", 1):
-		return "Treasure Chest\nSpend 1 key to open"
-	return "Treasure Chest\nNeed 1 key"
+		return "Сундук\nПотрать 1 ключ, чтобы открыть"
+	return "Сундук\nНужен 1 ключ"
 
 
 func _apply_visual_state() -> void:

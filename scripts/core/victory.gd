@@ -3,6 +3,7 @@ extends Control
 const RunState = preload("res://scripts/core/run_state.gd")
 
 @export var restart_scene_path: String = "res://scenes/Game.tscn"
+@export var menu_scene_path: String = "res://scenes/MainMenu.tscn"
 
 @onready var prompt: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/Prompt
 
@@ -14,5 +15,8 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("restart_hold") or event.is_action_pressed("ui_accept"):
-		RunState.reset_run()
+		RunState.start_new_run("endless")
 		get_tree().change_scene_to_file(restart_scene_path)
+	elif event.is_action_pressed("pause_game"):
+		RunState.reset_run()
+		get_tree().change_scene_to_file(menu_scene_path)

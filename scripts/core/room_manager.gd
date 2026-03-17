@@ -74,6 +74,7 @@ func _ready() -> void:
 
 
 func generate_map() -> void:
+	_dispose_cached_room_instances()
 	map.clear()
 	_create_room(Vector2i.ZERO)
 
@@ -165,10 +166,6 @@ func load_room(pos: Vector2i, entered_from: int) -> void:
 			previous_room_instance.on_room_unloaded()
 		if previous_room_instance.get_parent() == room_root:
 			room_root.remove_child(previous_room_instance)
-		if previous_pos != pos:
-			if map.has(previous_pos):
-				map[previous_pos]["instance"] = null
-			previous_room_instance.queue_free()
 	current_room_instance = null
 
 	var room_instance: Node = room_data.get("instance", null)
@@ -505,6 +502,17 @@ func _roll_chest_batch() -> void:
 		var slot := _reward_rng.randi_range(1, 10)
 		if not _planned_chest_slots.has(slot):
 			_planned_chest_slots.append(slot)
+
+
+func _dispose_cached_room_instances() -> void:
+	for room_data_variant in map.values():
+		var room_data: Dictionary = room_data_variant
+		var room_instance: Node = room_data.get("instance", null)
+		if room_instance == null:
+			continue
+		if room_instance.get_parent() != null:
+			room_instance.get_parent().remove_child(room_instance)
+		room_instance.queue_free()
 
 
 func notify_room_state_changed(pos: Vector2i) -> void:

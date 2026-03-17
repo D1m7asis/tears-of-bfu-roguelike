@@ -23,6 +23,7 @@ The game combines room-to-room combat, procedural generation, item builds, boss 
 
 ## Main Features
 
+- Main menu with nickname, audio settings, mode selection, and leaderboard.
 - Procedural floor generation with normal rooms, start rooms, and boss rooms.
 - Multi-floor progression with `Basement` transitions.
 - Bullet Time mechanic with charge, music slowdown, and screen effects.
@@ -73,6 +74,7 @@ The game combines room-to-room combat, procedural generation, item builds, boss 
 - Timer and score under the minimap.
 - Inventory screen with collected passives and detailed stats.
 - Game Over screen with kills, score, time, and reached basement.
+- Local profile stats persistence and web leaderboard integration.
 
 ## Project Structure
 
@@ -89,3 +91,21 @@ The game combines room-to-room combat, procedural generation, item builds, boss 
 ## Notes
 
 This repository contains the final course-game prototype with procedural gameplay, polished UI, effects, and multiple gameplay systems implemented during the lab sequence.
+
+## Web Leaderboard Backend
+
+The project includes a simple file-based backend in `web_backend/api/leaderboard.php` with persistent data stored in `web_backend/data/leaderboard.json`.
+
+To deploy it with the website:
+
+1. Copy the `web_backend/api` and `web_backend/data` folders to your web host next to the exported game files.
+2. Make sure PHP can write to `web_backend/data/leaderboard.json`.
+3. Set the menu API URL to the public path of `leaderboard.php`.
+   Example: `api/leaderboard.php`
+
+The menu stores nickname, API URL, audio settings, and local cumulative stats in `user://settings.cfg`.
+
+Desktop fallback:
+
+- If the game is launched locally as an app and the API URL is not an `http/https` address, leaderboard results are saved to `user://leaderboard_local.json`.
+- If the game runs on the web, or if you enter an explicit remote `http/https` API URL, it uses the PHP backend instead.

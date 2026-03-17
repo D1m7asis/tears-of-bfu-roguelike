@@ -19,7 +19,7 @@ layout_mode = 2
 
 [node name="Label" type="Label" parent="PanelContainer/VBoxContainer" unique_id=380852860]
 layout_mode = 2
-text = "Hold R to restart"
+text = "Удерживай R для рестарта"
 
 [node name="ProgressBar" type="ProgressBar" parent="PanelContainer/VBoxContainer" unique_id=1793719561]
 layout_mode = 2

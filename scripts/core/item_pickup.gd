@@ -1,6 +1,9 @@
 extends Area2D
 
 const SfxLib = preload("res://scripts/core/sfx_library.gd")
+const POSITIVE_STAT_COLOR := "#7CFF8D"
+const NEGATIVE_STAT_COLOR := "#FF6B6B"
+const NEUTRAL_STAT_COLOR := "#D8E2F4"
 
 @export var item_data: ItemData
 @export var amount: int = 1
@@ -136,22 +139,22 @@ func get_interaction_hint() -> String:
 		return ""
 
 	if item_data.pickup_kind == "heal":
-		return "%s\nHeal +%d HP" % [item_data.display_name, item_data.heal_amount]
+		return "%s\nЛечение +%d HP" % [item_data.get_localized_name(), item_data.heal_amount]
 	if item_data.pickup_kind == "active_item":
-		var details := _format_hint_lines(item_data.display_lines)
+		var details := _format_hint_lines(item_data.get_localized_display_lines())
 		var replace_hint := ""
 		var player := get_tree().get_first_node_in_group("player")
 		if player != null and player.has_method("get_active_item_name"):
 			var current_active_name := str(player.call("get_active_item_name"))
 			if current_active_name != "":
-				replace_hint = "\nReplaces %s" % current_active_name
-		return item_data.display_name + replace_hint if details == "" else "%s\n%s%s" % [item_data.display_name, details, replace_hint]
+				replace_hint = "\nЗаменит: %s" % current_active_name
+		return item_data.get_localized_name() + replace_hint if details == "" else "%s\n%s%s" % [item_data.get_localized_name(), details, replace_hint]
 	if item_data.pickup_kind == "passive_item":
-		var details := _format_hint_lines(item_data.build_stat_lines())
-		return item_data.display_name if details == "" else "%s\n%s" % [item_data.display_name, details]
+		var details := _format_hint_entries(item_data.build_stat_entries())
+		return item_data.get_localized_name() if details == "" else "%s\n%s" % [item_data.get_localized_name(), details]
 	if item_data.id == "key":
-		return "Key\nOpens treasure chests"
-	return item_data.display_name
+		return "Ключ\nОткрывает сундуки"
+	return item_data.get_localized_name()
 
 
 func get_hint_anchor_world_position() -> Vector2:
@@ -195,3 +198,24 @@ func _format_hint_lines(lines: PackedStringArray) -> String:
 	if lines.is_empty():
 		return ""
 	return "\n".join(lines)
+
+
+func _format_hint_entries(entries: Array[Dictionary]) -> String:
+	var lines := PackedStringArray()
+	for entry_variant in entries:
+		var entry: Dictionary = entry_variant
+		var text := str(entry.get("text", ""))
+		if text == "":
+			continue
+		lines.append("[color=%s]%s[/color]" % [_tone_color_hex(str(entry.get("tone", "neutral"))), text])
+	return "\n".join(lines)
+
+
+func _tone_color_hex(tone: String) -> String:
+	match tone:
+		"positive":
+			return POSITIVE_STAT_COLOR
+		"negative":
+			return NEGATIVE_STAT_COLOR
+		_:
+			return NEUTRAL_STAT_COLOR

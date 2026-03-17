@@ -6,7 +6,7 @@
 position = Vector2(-300, -150)
 
 [node name="SlotB" type="Marker2D" parent="."]
-position = Vector2(0, 40)
+position = Vector2(0, 190)
 
 [node name="SlotC" type="Marker2D" parent="."]
 position = Vector2(300, -120)

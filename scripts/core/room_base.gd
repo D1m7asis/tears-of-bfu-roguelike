@@ -6,6 +6,7 @@ const LootTableLib = preload("res://scripts/core/loot_tables.gd")
 const ITEM_PICKUP_SCENE = preload("res://scenes/ItemPickup.tscn")
 const RunStateLib = preload("res://scripts/core/run_state.gd")
 const ResourceRegistryLib = preload("res://scripts/core/resource_registry.gd")
+const FLOOR_VARIANT_TEXTURE = preload("res://assets/sprites/environment/floor.png")
 
 signal room_cleared(pos: Vector2i)
 
@@ -25,11 +26,24 @@ signal room_cleared(pos: Vector2i)
 @onready var door_e: Node = $Doors/Door_E
 @onready var door_s: Node = $Doors/Door_S
 @onready var door_w: Node = $Doors/Door_W
+@onready var floor_root: Node2D = $Floor
+@onready var floor_tile_map: TileMap = $Floor/TileMap
 @onready var enemies_root: Node = $Enemies
 @onready var reward_key_pickup: Area2D = get_node_or_null("ItemPickup")
 
+const FLOOR_ROOM_TINTS: Array[Color] = [
+	Color(0.98, 0.98, 1.02, 1.0),
+	Color(0.95, 0.99, 0.95, 1.0),
+	Color(1.0, 0.96, 0.92, 1.0),
+	Color(0.92, 0.96, 1.02, 1.0),
+]
+const FLOOR_PATCH_BOUNDS := Rect2(-460.0, -220.0, 920.0, 440.0)
+const ENTRY_SPAWN_SAFE_RADIUS: float = 170.0
+const CENTER_SPAWN_SAFE_RADIUS: float = 110.0
+
 var _enemy_layout_generated: bool = false
 var _decor_layout_generated: bool = false
+var _floor_visuals_generated: bool = false
 var _rng := RandomNumberGenerator.new()
 var _boss_spawned: bool = false
 var _boss_defeated: bool = false
@@ -67,6 +81,8 @@ func apply_room_data(data: Dictionary) -> void:
 	_room_kind = str(data.get("room_kind", "normal"))
 	_boss_door_dirs = data.get("boss_door_dirs", {})
 	_room_cleared_state = bool(data.get("cleared", _room_kind == "start"))
+	if _room_kind == "boss" and _room_cleared_state:
+		_boss_defeated = true
 	_reward_type = str(data.get("reward_type", "none"))
 	_reward_claimed = bool(data.get("reward_claimed", false))
 	_reward_item_path = str(data.get("reward_item_path", ""))
@@ -80,6 +96,7 @@ func apply_room_data(data: Dictionary) -> void:
 	_apply_one(door_s, bool(door_exists.get(RoomManager.Dir.S, false)), bool(door_open.get(RoomManager.Dir.S, false)))
 	_apply_one(door_w, bool(door_exists.get(RoomManager.Dir.W, false)), bool(door_open.get(RoomManager.Dir.W, false)))
 
+	_ensure_floor_visuals()
 	_ensure_decor_layout()
 	_ensure_enemy_layout()
 	_ensure_boss_content()
@@ -192,6 +209,8 @@ func _ensure_decor_root() -> void:
 func _ensure_enemy_layout() -> void:
 	if _enemy_layout_generated or not spawn_enemy_layouts or enemies_root == null:
 		return
+	if _room_cleared_state:
+		return
 
 	_enemy_layout_generated = true
 	_clear_existing_enemies()
@@ -201,7 +220,7 @@ func _ensure_enemy_layout() -> void:
 		return
 
 	var preset_instance := preset_scene.instantiate()
-	var spawn_points := _collect_spawn_points(preset_instance)
+	var spawn_points := _sanitize_spawn_points(_collect_spawn_points(preset_instance))
 	preset_instance.queue_free()
 
 	for spawn_point in spawn_points:
@@ -219,6 +238,10 @@ func _ensure_enemy_layout() -> void:
 
 func _ensure_boss_content() -> void:
 	if _boss_spawned or enemies_root == null or _room_kind != "boss":
+		return
+	if _room_cleared_state:
+		_boss_defeated = true
+		_spawn_victory_hatch()
 		return
 
 	var boss_spawn := get_node_or_null(boss_spawn_path)
@@ -400,6 +423,68 @@ func _apply_floor_scaling(enemy_instance: Node) -> void:
 		var base_speed: float = float(enemy_instance.get("speed"))
 		enemy_instance.set("speed", base_speed * (1.0 + floor_scale * 0.08))
 
+
+func _ensure_floor_visuals() -> void:
+	if _floor_visuals_generated:
+		return
+	_floor_visuals_generated = true
+	if floor_tile_map == null:
+		return
+
+	var room_seed := _room_visual_seed()
+	_rng.seed = room_seed
+	floor_tile_map.modulate = FLOOR_ROOM_TINTS[_rng.randi_range(0, FLOOR_ROOM_TINTS.size() - 1)]
+	_build_floor_patch_overlays()
+
+
+func _room_visual_seed() -> int:
+	var x_seed: int = int(_room_pos.x) * 73856093
+	var y_seed: int = int(_room_pos.y) * 19349663
+	var floor_seed: int = int(max(1, RunStateLib.floor_index)) * 83492791
+	return abs(x_seed ^ y_seed ^ floor_seed ^ int(_room_kind.hash()))
+
+
+func _build_floor_patch_overlays() -> void:
+	if floor_root == null or FLOOR_VARIANT_TEXTURE == null:
+		return
+
+	var overlays := floor_root.get_node_or_null("FloorVariants")
+	if overlays != null:
+		overlays.queue_free()
+
+	overlays = Node2D.new()
+	overlays.name = "FloorVariants"
+	overlays.z_index = -9
+	floor_root.add_child(overlays)
+
+	var patch_count: int = 4 + _rng.randi_range(0, 2)
+	var texture_size := FLOOR_VARIANT_TEXTURE.get_size()
+	for _i in range(patch_count):
+		var patch := Sprite2D.new()
+		patch.texture = FLOOR_VARIANT_TEXTURE
+		patch.centered = true
+		patch.region_enabled = true
+		var region_width: float = 120.0 + _rng.randi_range(0, 56)
+		var region_height: float = 88.0 + _rng.randi_range(0, 52)
+		var region_position := Vector2(
+			_rng.randf_range(0.0, maxf(0.0, texture_size.x - region_width)),
+			_rng.randf_range(0.0, maxf(0.0, texture_size.y - region_height))
+		)
+		patch.region_rect = Rect2(region_position, Vector2(region_width, region_height))
+		patch.position = Vector2(
+			_rng.randf_range(FLOOR_PATCH_BOUNDS.position.x, FLOOR_PATCH_BOUNDS.end.x),
+			_rng.randf_range(FLOOR_PATCH_BOUNDS.position.y, FLOOR_PATCH_BOUNDS.end.y)
+		)
+		patch.rotation = _rng.randf_range(-0.12, 0.12)
+		patch.scale = Vector2.ONE * _rng.randf_range(0.75, 1.15)
+		patch.modulate = Color(
+			0.92 + _rng.randf_range(-0.06, 0.05),
+			0.92 + _rng.randf_range(-0.05, 0.05),
+			0.92 + _rng.randf_range(-0.08, 0.05),
+			0.08 + _rng.randf_range(0.0, 0.06)
+		)
+		overlays.add_child(patch)
+
 func _apply_random_enemy_mutation(enemy_instance: Node) -> void:
 	if enemy_instance == null:
 		return
@@ -417,6 +502,51 @@ func _get_mutation_chance_for_floor() -> float:
 	var floor_level: int = max(1, RunStateLib.floor_index)
 	var chance: float = 0.035 + float(floor_level - 1) * 0.042
 	return clampf(maxf(chance, enemy_mutation_chance * 0.35), 0.035, 0.42)
+
+
+func _sanitize_spawn_points(raw_points: Array[Vector2]) -> Array[Vector2]:
+	var safe_points: Array[Vector2] = []
+	for spawn_point in raw_points:
+		if _is_spawn_point_safe(spawn_point):
+			safe_points.append(spawn_point)
+
+	if not safe_points.is_empty():
+		return safe_points
+
+	var fallback_points: Array[Vector2] = [
+		Vector2(-280, -150),
+		Vector2(280, -150),
+		Vector2(-280, 150),
+		Vector2(280, 150),
+		Vector2(0, -180),
+		Vector2(0, 180),
+	]
+	for fallback_point in fallback_points:
+		if _is_spawn_point_safe(fallback_point):
+			safe_points.append(fallback_point)
+		if safe_points.size() >= max(1, raw_points.size()):
+			break
+	return safe_points
+
+
+func _is_spawn_point_safe(spawn_point: Vector2) -> bool:
+	for entry_point in _get_entry_spawn_points():
+		if spawn_point.distance_to(entry_point) < ENTRY_SPAWN_SAFE_RADIUS:
+			return false
+	var center_spawn := get_node_or_null("Spawns/CenterSpawn")
+	if center_spawn != null and center_spawn is Node2D:
+		if spawn_point.distance_to((center_spawn as Node2D).position) < CENTER_SPAWN_SAFE_RADIUS:
+			return false
+	return true
+
+
+func _get_entry_spawn_points() -> Array[Vector2]:
+	var points: Array[Vector2] = []
+	for marker_name in ["Spawn_N", "Spawn_E", "Spawn_S", "Spawn_W"]:
+		var marker := get_node_or_null("Spawns/%s" % marker_name)
+		if marker != null and marker is Node2D:
+			points.append((marker as Node2D).position)
+	return points
 
 
 func _bind_enemy_signals() -> void:
@@ -555,12 +685,9 @@ func _remove_reward_active_pickup() -> void:
 
 func _reward_spawn_position() -> Vector2:
 	if _room_kind == "boss":
-		var hatch_spawn := get_node_or_null(hatch_spawn_path)
-		if hatch_spawn != null and hatch_spawn is Node2D:
-			return (hatch_spawn as Node2D).position + Vector2(210, -44)
 		var boss_spawn := get_node_or_null(boss_spawn_path)
 		if boss_spawn != null and boss_spawn is Node2D:
-			return (boss_spawn as Node2D).position + Vector2(210, 12)
+			return (boss_spawn as Node2D).position + Vector2(210, 20)
 	var spawn := get_node_or_null("KeySpawn")
 	if spawn != null and spawn is Node2D:
 		return (spawn as Node2D).position

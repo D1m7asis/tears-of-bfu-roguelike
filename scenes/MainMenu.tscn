@@ -1,0 +1,333 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/core/main_menu.gd" id="1_menu"]
+[ext_resource type="PackedScene" path="res://scenes/ui/BackgroundMusic.tscn" id="2_music"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.0509804, 0.0627451, 0.0901961, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.313726, 0.701961, 0.847059, 0.65)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+shadow_color = Color(0, 0, 0, 0.38)
+shadow_size = 18
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_accent"]
+bg_color = Color(0.121569, 0.141176, 0.184314, 0.98)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.929412, 0.490196, 0.266667, 0.9)
+corner_radius_top_left = 26
+corner_radius_top_right = 26
+corner_radius_bottom_right = 26
+corner_radius_bottom_left = 26
+shadow_color = Color(0, 0, 0, 0.42)
+shadow_size = 18
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_menu")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0196078, 0.0235294, 0.0352941, 1)
+
+[node name="GlowTop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+offset_right = -420.0
+offset_bottom = -280.0
+color = Color(0.0313726, 0.34902, 0.486275, 0.28)
+
+[node name="GlowBottom" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+offset_left = 480.0
+offset_top = 330.0
+color = Color(0.529412, 0.14902, 0.0784314, 0.22)
+
+[node name="GlowCenter" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = -180.0
+offset_right = 250.0
+offset_bottom = 180.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.141176, 0.2, 0.305882, 0.16)
+
+[node name="BackgroundMusic" parent="." instance=ExtResource("2_music")]
+
+[node name="RootMargin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 16
+
+[node name="Scroll" type="ScrollContainer" parent="RootMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Center" type="CenterContainer" parent="RootMargin/Scroll"]
+custom_minimum_size = Vector2(0, 700)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Shell" type="VBoxContainer" parent="RootMargin/Scroll/Center"]
+custom_minimum_size = Vector2(320, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 14
+
+[node name="HeroCard" type="PanelContainer" parent="RootMargin/Scroll/Center/Shell"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_accent")
+
+[node name="HeroMargin" type="MarginContainer" parent="RootMargin/Scroll/Center/Shell/HeroCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 22
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 22
+
+[node name="HeroStack" type="VBoxContainer" parent="RootMargin/Scroll/Center/Shell/HeroCard/HeroMargin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Eyebrow" type="Label" parent="RootMargin/Scroll/Center/Shell/HeroCard/HeroMargin/HeroStack"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.992157, 0.764706, 0.415686, 1)
+theme_override_font_sizes/font_size = 14
+text = "АРКАДНЫЙ РОГАЛИК // WEB-ВЕРСИЯ"
+horizontal_alignment = 1
+
+[node name="Title" type="Label" parent="RootMargin/Scroll/Center/Shell/HeroCard/HeroMargin/HeroStack"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "Tears of BFU"
+horizontal_alignment = 1
+
+[node name="AccentLine" type="Label" parent="RootMargin/Scroll/Center/Shell/HeroCard/HeroMargin/HeroStack"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.772549, 0.917647, 1, 1)
+theme_override_font_sizes/font_size = 17
+text = "Пилот спускается в подвал."
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="RootMargin/Scroll/Center/Shell/HeroCard/HeroMargin/HeroStack"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+text = "Настрой пилота, проверь рейтинг и запускай бесконечный режим."
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="ModeHint" type="Label" parent="RootMargin/Scroll/Center/Shell/HeroCard/HeroMargin/HeroStack"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.976471, 0.811765, 0.470588, 1)
+theme_override_font_sizes/font_size = 14
+text = "Режим кампании запланирован, но в этой версии недоступен."
+horizontal_alignment = 1
+
+[node name="TabsCard" type="PanelContainer" parent="RootMargin/Scroll/Center/Shell"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="TabsMargin" type="MarginContainer" parent="RootMargin/Scroll/Center/Shell/TabsCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 18
+
+[node name="Tabs" type="TabContainer" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin"]
+custom_minimum_size = Vector2(320, 420)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+current_tab = 0
+tabs_rearrange_group = 1
+
+[node name="Play" type="VBoxContainer" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="PlayTitle" type="Label" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Play"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Выбор режима"
+
+[node name="PlayText" type="Label" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Play"]
+layout_mode = 2
+text = "Сейчас доступен бесконечный режим. Кампания появится позже."
+autowrap_mode = 3
+
+[node name="PlaySummary" type="Label" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Play"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.807843, 0.905882, 1, 1)
+theme_override_font_sizes/font_size = 16
+text = "Текущий режим: Бесконечный"
+
+[node name="StartEndlessButton" type="Button" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Play"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+text = "Начать бесконечный режим"
+
+[node name="CampaignButton" type="Button" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Play"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+text = "Кампания (скоро)"
+
+[node name="Profile" type="VBoxContainer" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="ProfileTitle" type="Label" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Profile"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Профиль пилота"
+
+[node name="NicknameLabel" type="Label" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Profile"]
+layout_mode = 2
+text = "Ник"
+
+[node name="NicknameInput" type="LineEdit" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Profile"]
+layout_mode = 2
+placeholder_text = "Введи ник"
+max_length = 24
+
+[node name="ProfileHint" type="Label" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Profile"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.780392, 0.854902, 0.945098, 1)
+theme_override_font_sizes/font_size = 15
+text = "Этот ник используется для статистики и отправки результатов в рейтинг."
+autowrap_mode = 3
+
+[node name="ProfileStatsText" type="Label" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Profile"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+text = "Локальный профиль"
+
+[node name="Settings" type="VBoxContainer" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="SettingsTitle" type="Label" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Settings"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Настройки"
+
+[node name="MusicLabel" type="Label" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Settings"]
+layout_mode = 2
+text = "Громкость музыки"
+
+[node name="MusicSlider" type="HSlider" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Settings"]
+layout_mode = 2
+max_value = 100.0
+value = 55.0
+
+[node name="MusicValue" type="Label" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Settings"]
+layout_mode = 2
+text = "Музыка: 55%"
+
+[node name="SfxLabel" type="Label" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Settings"]
+layout_mode = 2
+text = "Громкость звуков"
+
+[node name="SfxSlider" type="HSlider" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Settings"]
+layout_mode = 2
+max_value = 100.0
+value = 75.0
+
+[node name="SfxValue" type="Label" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Settings"]
+layout_mode = 2
+text = "Звуки: 75%"
+
+[node name="SettingsHint" type="Label" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Settings"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.780392, 0.854902, 0.945098, 1)
+theme_override_font_sizes/font_size = 15
+text = "Настройки звука сохраняются сразу и применяются при следующем запуске."
+autowrap_mode = 3
+
+[node name="Leaderboard" type="VBoxContainer" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="LeaderboardTitle" type="Label" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Leaderboard"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Рейтинг"
+
+[node name="LeaderboardStatus" type="Label" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Leaderboard"]
+layout_mode = 2
+text = "Ожидаю обновления..."
+autowrap_mode = 3
+
+[node name="LeaderboardHint" type="Label" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Leaderboard"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.780392, 0.854902, 0.945098, 1)
+theme_override_font_sizes/font_size = 15
+text = "На сайте рейтинг онлайн, на компьютере локальный. Переключение происходит автоматически."
+autowrap_mode = 3
+
+[node name="LeaderboardList" type="ItemList" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Leaderboard"]
+custom_minimum_size = Vector2(0, 280)
+layout_mode = 2
+size_flags_vertical = 3
+same_column_width = true
+max_text_lines = 1
+
+[node name="RefreshLeaderboardButton" type="Button" parent="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Leaderboard"]
+custom_minimum_size = Vector2(0, 46)
+layout_mode = 2
+text = "Обновить рейтинг"
+
+[connection signal="text_submitted" from="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Profile/NicknameInput" to="." method="_on_nickname_input_text_submitted"]
+[connection signal="focus_exited" from="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Profile/NicknameInput" to="." method="_on_nickname_input_focus_exited"]
+[connection signal="value_changed" from="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Settings/MusicSlider" to="." method="_on_music_slider_value_changed"]
+[connection signal="value_changed" from="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Settings/SfxSlider" to="." method="_on_sfx_slider_value_changed"]
+[connection signal="pressed" from="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Play/StartEndlessButton" to="." method="_on_start_endless_button_pressed"]
+[connection signal="pressed" from="RootMargin/Scroll/Center/Shell/TabsCard/TabsMargin/Tabs/Leaderboard/RefreshLeaderboardButton" to="." method="_on_refresh_leaderboard_button_pressed"]

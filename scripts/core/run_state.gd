@@ -6,6 +6,7 @@ static var continue_run: bool = false
 static var player_state: Dictionary = {}
 static var death_summary: Dictionary = {}
 static var floor_reached_max: int = 1
+static var current_mode: String = "endless"
 
 
 static func reset_run() -> void:
@@ -14,6 +15,12 @@ static func reset_run() -> void:
 	continue_run = false
 	player_state = {}
 	death_summary = {}
+	current_mode = "endless"
+
+
+static func start_new_run(mode: String = "endless") -> void:
+	reset_run()
+	current_mode = mode
 
 
 static func advance_to_next_floor(state: Dictionary) -> void:
@@ -33,4 +40,6 @@ static func store_death_summary(summary: Dictionary) -> void:
 
 
 static func consume_death_summary() -> Dictionary:
-	return death_summary.duplicate(true)
+	var summary := death_summary.duplicate(true)
+	death_summary = {}
+	return summary

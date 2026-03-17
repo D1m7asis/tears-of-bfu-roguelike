@@ -3,7 +3,7 @@
 [node name="EnemyPresetDuo" type="Node2D"]
 
 [node name="SlotA" type="Marker2D" parent="."]
-position = Vector2(-250, -90)
+position = Vector2(-260, -150)
 
 [node name="SlotB" type="Marker2D" parent="."]
-position = Vector2(230, 110)
+position = Vector2(260, 150)

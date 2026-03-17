@@ -3,13 +3,13 @@
 [node name="EnemyPresetCross" type="Node2D"]
 
 [node name="SlotA" type="Marker2D" parent="."]
-position = Vector2(-340, 0)
+position = Vector2(-315, -110)
 
 [node name="SlotB" type="Marker2D" parent="."]
-position = Vector2(0, -160)
+position = Vector2(0, -205)
 
 [node name="SlotC" type="Marker2D" parent="."]
-position = Vector2(0, 160)
+position = Vector2(0, 205)
 
 [node name="SlotD" type="Marker2D" parent="."]
-position = Vector2(340, 0)
+position = Vector2(315, -110)

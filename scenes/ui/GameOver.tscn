@@ -70,13 +70,13 @@ theme_override_constants/separation = 14
 [node name="Title" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 42
-text = "GAME OVER"
+text = "КОНЕЦ ЗАБЕГА"
 horizontal_alignment = 1
 
 [node name="Subtitle" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "Run collapsed. Keys lost. Determination remains."
+text = "Забег оборвался. Ключи потеряны. Упорство осталось."
 horizontal_alignment = 1
 autowrap_mode = 3
 
@@ -84,11 +84,19 @@ autowrap_mode = 3
 layout_mode = 2
 theme_override_colors/font_color = Color(0.93, 0.88, 0.82, 1)
 theme_override_font_sizes/font_size = 20
-text = "Kills: 0\nScore: 0\nTime: 00:00\nReached Basement: 1"
+text = "Убийства: 0\nСчёт: 0\nВремя: 00:00\nДостигнут подвал: 1"
 horizontal_alignment = 1
+
+[node name="SubmitStatus" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.86, 0.9, 0.96, 1)
+theme_override_font_sizes/font_size = 16
+text = "Отправляю результат..."
+horizontal_alignment = 1
+autowrap_mode = 3
 
 [node name="Prompt" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
-text = "Press Enter or hold R to try again"
+text = "Enter или удержание R - рестарт, Esc - назад в меню"
 horizontal_alignment = 1

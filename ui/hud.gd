@@ -28,8 +28,8 @@ const SfxLib = preload("res://scripts/core/sfx_library.gd")
 @onready var item_card: Panel = $ItemCard
 @onready var item_card_icon: TextureRect = $ItemCard/CardMargin/CardRow/CardIcon
 @onready var item_card_title: Label = $ItemCard/CardMargin/CardRow/CardText/CardTitle
-@onready var item_card_lines: Label = $ItemCard/CardMargin/CardRow/CardText/CardLines
-@onready var pickup_hint_label: Label = $PickupHint
+@onready var item_card_lines: RichTextLabel = $ItemCard/CardMargin/CardRow/CardText/CardLines
+@onready var pickup_hint_label: RichTextLabel = $PickupHint
 @onready var cinematic_backdrop: ColorRect = $CinematicBackdrop
 @onready var cinematic_banner: Label = $CinematicBanner
 @onready var collected_items_container: GridContainer = $VBoxContainer/CollectedItems
@@ -54,6 +54,10 @@ var _item_card_tween: Tween = null
 var _banner_tween: Tween = null
 var _inventory_open: bool = false
 
+const POSITIVE_STAT_COLOR := "#7CFF8D"
+const NEGATIVE_STAT_COLOR := "#FF6B6B"
+const NEUTRAL_STAT_COLOR := "#D8E2F4"
+
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -64,7 +68,7 @@ func _ready() -> void:
 	update_bullet_time(0.0, 5.0, false)
 	update_player_stats({})
 	update_run_meta(0.0, 0, 1)
-	set_hint("WASD move, Arrows shoot, Shift bullet time, E active item, Q inventory, Hold R restart, Esc pause")
+	set_hint("WASD - движение, стрелки - стрельба, Shift - фокус, E - активный предмет, Q - инвентарь, удерживай R - рестарт, Esc - пауза")
 	_resolve_background_music()
 	_sync_music_slider()
 	_sync_sfx_slider()
@@ -87,7 +91,7 @@ func update_health(current: int, max_value: int = -1) -> void:
 	heart_bar.set_health(current, max_value)
 
 func update_keys(value: int) -> void:
-	key_label.text = "Keys: " + str(value)
+	key_label.text = "Ключи: " + str(value)
 
 func update_active_item(item: ItemData, cooldown_remaining: float) -> void:
 	if active_item_panel == null:
@@ -99,7 +103,7 @@ func update_active_item(item: ItemData, cooldown_remaining: float) -> void:
 	if active_item_icon != null:
 		active_item_icon.texture = item.icon
 	if active_item_name != null:
-		active_item_name.text = item.display_name
+		active_item_name.text = item.get_localized_name()
 	var rarity_color: Color = item.get_rarity_color() if item != null else Color.WHITE
 	active_item_panel.modulate = rarity_color
 	if active_item_icon != null:
@@ -107,7 +111,7 @@ func update_active_item(item: ItemData, cooldown_remaining: float) -> void:
 	if active_item_name != null:
 		active_item_name.modulate = rarity_color
 	if active_item_state != null:
-		active_item_state.text = "Ready [E]" if cooldown_remaining <= 0.0 else "Cooldown %.1fs" % [cooldown_remaining]
+		active_item_state.text = "Готово [E]" if cooldown_remaining <= 0.0 else "Перезарядка %.1f с" % [cooldown_remaining]
 		active_item_state.modulate = rarity_color.lightened(0.12)
 
 func update_player_stats(stats: Dictionary) -> void:
@@ -117,7 +121,7 @@ func update_player_stats(stats: Dictionary) -> void:
 	var ats := float(stats.get("attack_speed", 0.0))
 	var max_hp := int(stats.get("max_health", 0))
 	var move_speed := int(round(float(stats.get("move_speed", 0.0))))
-	stats_label.text = "DMG %d   ATS %.1f   MAX HP %d   SPD %d" % [damage, ats, max_hp, move_speed]
+	stats_label.text = "УРОН %d   СКОР. АТКИ %.1f   МАКС. HP %d   СКОРОСТЬ %d" % [damage, ats, max_hp, move_speed]
 
 
 func update_run_meta(elapsed_seconds: float, score: int, basement: int) -> void:
@@ -126,7 +130,7 @@ func update_run_meta(elapsed_seconds: float, score: int, basement: int) -> void:
 	var total_seconds: int = int(maxf(0.0, elapsed_seconds))
 	var minutes: int = int(total_seconds / 60)
 	var seconds: int = total_seconds % 60
-	run_meta_label.text = "BASEMENT %d\nTIME %02d:%02d\nSCORE %d" % [basement, minutes, seconds, score]
+	run_meta_label.text = "ПОДВАЛ %d\nВРЕМЯ %02d:%02d\nСЧЁТ %d" % [basement, minutes, seconds, score]
 
 func update_collected_items(items: Array) -> void:
 	if collected_items_container == null:
@@ -143,7 +147,7 @@ func update_collected_items(items: Array) -> void:
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		icon.texture = item.icon
 		var tooltip_lines := item.build_stat_lines()
-		icon.tooltip_text = item.display_name + ("\n" + "\n".join(tooltip_lines) if not tooltip_lines.is_empty() else "")
+		icon.tooltip_text = item.get_localized_name() + ("\n" + "\n".join(tooltip_lines) if not tooltip_lines.is_empty() else "")
 		collected_items_container.add_child(icon)
 
 func show_passive_item_card(item: ItemData) -> void:
@@ -162,10 +166,14 @@ func show_passive_item_card(item: ItemData) -> void:
 		item_card_icon.texture = item.icon
 		item_card_icon.modulate = item.get_rarity_color() if item.pickup_kind == "active_item" else Color.WHITE
 	if item_card_title != null:
-		item_card_title.text = item.display_name
+		item_card_title.text = item.get_localized_name()
 		item_card_title.modulate = item.get_rarity_color() if item.pickup_kind == "active_item" else Color(1, 0.95, 0.86, 1)
 	if item_card_lines != null:
-		item_card_lines.text = "\n".join(_build_item_display_lines(item))
+		item_card_lines.clear()
+		item_card_lines.bbcode_enabled = true
+		item_card_lines.fit_content = true
+		item_card_lines.scroll_active = false
+		item_card_lines.text = _build_item_display_bbcode(item)
 	if item_card != null:
 		item_card.modulate = item.get_rarity_color().lightened(0.05) if item.pickup_kind == "active_item" else Color.WHITE
 
@@ -188,6 +196,12 @@ func _build_item_display_lines(item: ItemData) -> PackedStringArray:
 		return PackedStringArray()
 	return item.build_stat_lines()
 
+
+func _build_item_display_bbcode(item: ItemData) -> String:
+	if item == null:
+		return ""
+	return _entries_to_bbcode(item.build_stat_entries())
+
 func update_bullet_time(current: float, max_value: float, active: bool) -> void:
 	if bullet_time_bar != null:
 		bullet_time_bar.max_value = max_value
@@ -196,10 +210,10 @@ func update_bullet_time(current: float, max_value: float, active: bool) -> void:
 	if bullet_time_label != null:
 		var seconds_text := str(snappedf(current, 0.1))
 		if active:
-			bullet_time_label.text = "Bullet Time: " + seconds_text + "s"
+			bullet_time_label.text = "Фокус: " + seconds_text + " с"
 			bullet_time_label.modulate = Color(0.8, 0.95, 1.0, 1.0)
 		else:
-			bullet_time_label.text = "Focus: " + seconds_text + "s"
+			bullet_time_label.text = "Заряд фокуса: " + seconds_text + " с"
 			bullet_time_label.modulate = Color(0.839216, 0.886275, 0.980392, 1)
 
 	_update_bullet_time_overlay(current, max_value, active)
@@ -210,6 +224,9 @@ func set_hint(text: String) -> void:
 func set_pickup_hint(text: String, world_position: Vector2 = Vector2.ZERO) -> void:
 	if pickup_hint_label == null:
 		return
+	pickup_hint_label.bbcode_enabled = true
+	pickup_hint_label.fit_content = true
+	pickup_hint_label.scroll_active = false
 	pickup_hint_label.text = text
 	pickup_hint_label.visible = text != ""
 	if text == "":
@@ -248,14 +265,14 @@ func update_inventory_view(active_item: ItemData, inventory: Array, passive_item
 		inventory_active_icon.texture = null if active_item == null else active_item.icon
 		inventory_active_icon.modulate = Color.WHITE if active_item == null else active_item.get_rarity_color()
 	if inventory_active_name != null:
-		inventory_active_name.text = "No Active Item" if active_item == null else active_item.display_name
+		inventory_active_name.text = "Нет активного предмета" if active_item == null else active_item.get_localized_name()
 		inventory_active_name.modulate = Color(0.95, 0.92, 0.84, 1.0) if active_item == null else active_item.get_rarity_color()
 	if inventory_active_state != null:
 		if active_item == null:
-			inventory_active_state.text = "Slot empty"
+			inventory_active_state.text = "Слот пуст"
 		else:
 			var active_lines: PackedStringArray = _build_item_display_lines(active_item)
-			inventory_active_state.text = "Press E to use" if active_lines.is_empty() else "Press E to use\n" + "\n".join(active_lines)
+			inventory_active_state.text = "Нажми E для активации" if active_lines.is_empty() else "Нажми E для активации\n" + "\n".join(active_lines)
 
 	if inventory_stackables_label != null:
 		var stack_lines: PackedStringArray = PackedStringArray()
@@ -265,29 +282,29 @@ func update_inventory_view(active_item: ItemData, inventory: Array, passive_item
 			if item == null:
 				continue
 			var count: int = int(slot.get("count", 0))
-			stack_lines.append("%s x%d" % [item.display_name, count])
-		inventory_stackables_label.text = "STACKABLES\nNone collected yet" if stack_lines.is_empty() else "STACKABLES\n" + "\n".join(stack_lines)
+			stack_lines.append("%s x%d" % [item.get_localized_name(), count])
+		inventory_stackables_label.text = "РАСХОДНИКИ\nПока пусто" if stack_lines.is_empty() else "РАСХОДНИКИ\n" + "\n".join(stack_lines)
 
 	if inventory_stats_left_label != null:
 		var left_lines: PackedStringArray = PackedStringArray([
-			"OFFENSE",
-			"Damage per shot: %d" % [int(stats.get("damage", 1))],
-			"Attack speed: %.2f" % [float(stats.get("attack_speed", 0.0))],
-			"Extra projectiles: %d" % [int(stats.get("extra_shots", 0))],
-			"Projectile speed: %d" % [int(round(float(stats.get("projectile_speed", 0.0))))],
-			"Active cooldown: x%.2f" % [float(stats.get("active_cooldown_multiplier", 1.0))],
+			"АТАКА",
+			"Урон за выстрел: %d" % [int(stats.get("damage", 1))],
+			"Скорость атаки: %.2f" % [float(stats.get("attack_speed", 0.0))],
+			"Доп. снаряды: %d" % [int(stats.get("extra_shots", 0))],
+			"Скорость пули: %d" % [int(round(float(stats.get("projectile_speed", 0.0))))],
+			"Перезар. активки: x%.2f" % [float(stats.get("active_cooldown_multiplier", 1.0))],
 		])
 		inventory_stats_left_label.text = "\n".join(left_lines)
 
 	if inventory_stats_right_label != null:
 		var right_lines: PackedStringArray = PackedStringArray([
-			"SURVIVAL",
-			"Maximum health: %d" % [int(stats.get("max_health", 0))],
-			"Move speed: %d" % [int(round(float(stats.get("move_speed", 0.0))))],
-			"Armor: %d" % [int(stats.get("armor", 0))],
-			"Heal on kill: %d" % [int(stats.get("heal_on_kill", 0))],
-			"Focus capacity: %.1f" % [float(stats.get("focus_max", 0.0))],
-			"Focus per kill: %.1f" % [float(stats.get("focus_kill_gain", 0.0))],
+			"ЖИВУЧЕСТЬ",
+			"Максимум HP: %d" % [int(stats.get("max_health", 0))],
+			"Скорость: %d" % [int(round(float(stats.get("move_speed", 0.0))))],
+			"Броня: %d" % [int(stats.get("armor", 0))],
+			"Лечение за килл: %d" % [int(stats.get("heal_on_kill", 0))],
+			"Ёмкость фокуса: %.1f" % [float(stats.get("focus_max", 0.0))],
+			"Фокус за килл: %.1f" % [float(stats.get("focus_kill_gain", 0.0))],
 		])
 		inventory_stats_right_label.text = "\n".join(right_lines)
 
@@ -302,7 +319,7 @@ func update_inventory_view(active_item: ItemData, inventory: Array, passive_item
 				continue
 			var path: String = passive_item.resource_path
 			if path == "":
-				path = passive_item.display_name
+				path = passive_item.get_localized_name()
 			passive_counts[path] = int(passive_counts.get(path, 0)) + 1
 			passive_items_by_path[path] = passive_item
 		for path in passive_counts.keys():
@@ -326,24 +343,31 @@ func update_inventory_view(active_item: ItemData, inventory: Array, passive_item
 			text_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			row.add_child(text_box)
 			var title := Label.new()
-			title.text = passive_item.display_name + (" x%d" % [int(passive_counts[path])] if int(passive_counts[path]) > 1 else "")
+			title.text = passive_item.get_localized_name() + (" x%d" % [int(passive_counts[path])] if int(passive_counts[path]) > 1 else "")
 			title.add_theme_font_size_override("font_size", 14)
 			title.add_theme_color_override("font_color", Color(0.95, 0.92, 0.84, 1.0))
 			text_box.add_child(title)
-			var detail := Label.new()
+			var detail := RichTextLabel.new()
+			detail.bbcode_enabled = true
+			detail.fit_content = true
+			detail.scroll_active = false
 			detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			detail.add_theme_font_size_override("font_size", 12)
-			detail.add_theme_color_override("font_color", Color(0.80, 0.88, 0.98, 1.0))
-			var passive_lines: PackedStringArray = _build_item_display_lines(passive_item)
+			detail.custom_minimum_size = Vector2(0, 0)
+			detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			detail.add_theme_font_size_override("normal_font_size", 12)
+			var passive_entries: Array[Dictionary] = passive_item.build_stat_entries()
 			var count: int = int(passive_counts[path])
-			var scaled_lines: PackedStringArray = PackedStringArray()
-			for line in passive_lines:
-				if count > 1 and line.find("x") == -1 and line.find("CD ") == -1:
-					scaled_lines.append("%s  (%dx)" % [line, count])
-				else:
-					scaled_lines.append(line)
-			detail.text = "No numeric bonus lines" if scaled_lines.is_empty() else "\n".join(scaled_lines)
-			icon.tooltip_text = passive_item.display_name + ("\n" + "\n".join(scaled_lines) if not scaled_lines.is_empty() else "")
+			var scaled_entries: Array[Dictionary] = []
+			for entry_variant in passive_entries:
+				var entry: Dictionary = entry_variant.duplicate(true)
+				if count > 1:
+					entry["text"] = "%s  (x%d)" % [str(entry.get("text", "")), count]
+				scaled_entries.append(entry)
+			if scaled_entries.is_empty():
+				detail.text = "[color=%s]Нет числовых бонусов[/color]" % NEUTRAL_STAT_COLOR
+			else:
+				detail.text = _entries_to_bbcode(scaled_entries)
+			icon.tooltip_text = passive_item.get_localized_name() + ("\n" + "\n".join(_entry_texts(scaled_entries)) if not scaled_entries.is_empty() else "")
 			text_box.add_child(detail)
 			inventory_passives_grid.add_child(slot_root)
 
@@ -410,7 +434,7 @@ func _sync_music_slider() -> void:
 
 func _update_music_value_label(percent: float) -> void:
 	if music_value_label != null:
-		music_value_label.text = "Music: " + str(int(round(percent))) + "%"
+		music_value_label.text = "Музыка: " + str(int(round(percent))) + "%"
 
 func _sync_sfx_slider() -> void:
 	if sfx_slider == null:
@@ -422,7 +446,7 @@ func _sync_sfx_slider() -> void:
 
 func _update_sfx_value_label(percent: float) -> void:
 	if sfx_value_label != null:
-		sfx_value_label.text = "SFX: " + str(int(round(percent))) + "%"
+		sfx_value_label.text = "Звуки: " + str(int(round(percent))) + "%"
 
 func _on_music_slider_value_changed(value: float) -> void:
 	_update_music_value_label(value)
@@ -442,6 +466,37 @@ func _on_restart_button_pressed() -> void:
 	get_tree().paused = false
 	get_tree().reload_current_scene()
 
+
+func _entries_to_bbcode(entries: Array[Dictionary]) -> String:
+	var lines: PackedStringArray = PackedStringArray()
+	for entry_variant in entries:
+		var entry: Dictionary = entry_variant
+		var text := str(entry.get("text", ""))
+		if text == "":
+			continue
+		lines.append("[color=%s]%s[/color]" % [_tone_color_hex(str(entry.get("tone", "neutral"))), text])
+	return "\n".join(lines)
+
+
+func _entry_texts(entries: Array[Dictionary]) -> PackedStringArray:
+	var lines := PackedStringArray()
+	for entry_variant in entries:
+		var entry: Dictionary = entry_variant
+		var text := str(entry.get("text", ""))
+		if text != "":
+			lines.append(text)
+	return lines
+
+
+func _tone_color_hex(tone: String) -> String:
+	match tone:
+		"positive":
+			return POSITIVE_STAT_COLOR
+		"negative":
+			return NEGATIVE_STAT_COLOR
+		_:
+			return NEUTRAL_STAT_COLOR
+
 func _update_bullet_time_overlay(current: float, max_value: float, active: bool) -> void:
 	var percent := 0.0
 	if max_value > 0.0:
@@ -452,7 +507,7 @@ func _update_bullet_time_overlay(current: float, max_value: float, active: bool)
 		bullet_time_meter.value = current
 
 	if bullet_time_seconds != null:
-		bullet_time_seconds.text = str(snappedf(current, 0.1)) + "s"
+		bullet_time_seconds.text = str(snappedf(current, 0.1)) + " с"
 
 	_set_bullet_time_charge_ratio(percent)
 	_animate_bullet_time_overlay(active)

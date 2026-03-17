@@ -22,13 +22,13 @@ layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 20
-text = "Keys: 1"
+text = "Ключи: 1"
 
 [node name="HintLabel" type="Label" parent="VBoxContainer" unique_id=1538361181]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.5729883, 0.5729883, 0.5729883, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
-text = "Hint: 123 456"
+text = "Подсказка"
 autowrap_mode = 2
 
 [node name="ActiveItemPanel" type="Panel" parent="VBoxContainer"]
@@ -59,21 +59,21 @@ size_flags_horizontal = 3
 [node name="ActiveItemName" type="Label" parent="VBoxContainer/ActiveItemPanel/ActiveItemRow/ActiveItemText"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "Active"
+text = "Активка"
 autowrap_mode = 2
 
 [node name="ActiveItemState" type="Label" parent="VBoxContainer/ActiveItemPanel/ActiveItemRow/ActiveItemText"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.83, 0.83, 0.83, 1)
 theme_override_font_sizes/font_size = 15
-text = "Ready [E]"
+text = "Готово [E]"
 autowrap_mode = 2
 
 [node name="BulletTimeLabel" type="Label" parent="VBoxContainer"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.839216, 0.886275, 0.980392, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
-text = "Focus: 5.0s"
+text = "Заряд фокуса: 5.0 с"
 
 [node name="BulletTimeBar" type="ProgressBar" parent="VBoxContainer"]
 custom_minimum_size = Vector2(180, 12)
@@ -87,7 +87,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.86, 0.82, 0.7, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 15
-text = "DMG 1   ATS 3.3   MAX HP 5"
+text = "УРОН 1   СКОР. АТКИ 3.3   МАКС. HP 5"
 
 [node name="CollectedItems" type="GridContainer" parent="VBoxContainer"]
 layout_mode = 2
@@ -132,7 +132,7 @@ theme_override_colors/font_shadow_color = Color(0.01, 0.05, 0.08, 1)
 theme_override_constants/shadow_offset_x = 0
 theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 34
-text = "BULLET TIME"
+text = "ФОКУС"
 horizontal_alignment = 1
 
 [node name="BulletTimeSeconds" type="Label" parent="BulletTimeOverlay/TopCenter/BulletTimeStack"]
@@ -142,7 +142,7 @@ theme_override_colors/font_shadow_color = Color(0.01, 0.05, 0.08, 1)
 theme_override_constants/shadow_offset_x = 0
 theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 18
-text = "5.0s"
+text = "5.0 с"
 horizontal_alignment = 1
 
 [node name="BottomCenter" type="CenterContainer" parent="BulletTimeOverlay"]
@@ -196,7 +196,7 @@ theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_offset_x = 1
 theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 20
-text = "BASEMENT 1\nTIME 00:00\nSCORE 0"
+text = "ПОДВАЛ 1\nВРЕМЯ 00:00\nСЧЁТ 0"
 horizontal_alignment = 2
 
 [node name="ItemCard" type="Panel" parent="."]
@@ -241,15 +241,15 @@ size_flags_horizontal = 3
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.95, 0.86, 1)
 theme_override_font_sizes/font_size = 24
-text = "Item"
+text = "Предмет"
 
-[node name="CardLines" type="Label" parent="ItemCard/CardMargin/CardRow/CardText"]
+[node name="CardLines" type="RichTextLabel" parent="ItemCard/CardMargin/CardRow/CardText"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.89, 0.87, 0.78, 1)
 theme_override_font_sizes/font_size = 15
-text = "DMG +1"
+text = "УРОН +1"
 
-[node name="PickupHint" type="Label" parent="."]
+[node name="PickupHint" type="RichTextLabel" parent="."]
 visible = false
 layout_mode = 1
 offset_right = 420.0
@@ -263,11 +263,10 @@ theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_offset_x = 1
 theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 18
-horizontal_alignment = 1
-vertical_alignment = 0
 autowrap_mode = 2
-clip_text = false
-text_overrun_behavior = 0
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
 
 [node name="CinematicBackdrop" type="ColorRect" parent="."]
 visible = false
@@ -334,13 +333,13 @@ theme_override_constants/separation = 12
 [node name="PauseTitle" type="Label" parent="PauseOverlay/PausePanel/PauseContent"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
-text = "Pause"
+text = "Пауза"
 horizontal_alignment = 1
 
 [node name="PauseHint" type="Label" parent="PauseOverlay/PausePanel/PauseContent"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
-text = "Esc resume"
+text = "Esc - назад в игру"
 horizontal_alignment = 1
 
 [node name="InventoryOverlay" type="ColorRect" parent="."]
@@ -387,14 +386,14 @@ theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_offset_x = 1
 theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 34
-text = "INVENTORY"
+text = "ИНВЕНТАРЬ"
 horizontal_alignment = 1
 
 [node name="InventorySubtitle" type="Label" parent="InventoryOverlay/InventoryPanel/InventoryMargin/InventoryContent"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.76, 0.82, 1)
 theme_override_font_sizes/font_size = 16
-text = "Q close  |  E use active  |  Live run breakdown"
+text = "Q - закрыть | E - активка | Сводка текущего забега"
 horizontal_alignment = 1
 
 [node name="InventoryActiveRow" type="HBoxContainer" parent="InventoryOverlay/InventoryPanel/InventoryMargin/InventoryContent"]
@@ -413,14 +412,14 @@ size_flags_horizontal = 3
 [node name="InventoryActiveName" type="Label" parent="InventoryOverlay/InventoryPanel/InventoryMargin/InventoryContent/InventoryActiveRow/InventoryActiveText"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "No Active Item"
+text = "Нет активного предмета"
 
 [node name="InventoryActiveState" type="Label" parent="InventoryOverlay/InventoryPanel/InventoryMargin/InventoryContent/InventoryActiveRow/InventoryActiveText"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.86, 0.86, 0.86, 1)
 theme_override_font_sizes/font_size = 16
 autowrap_mode = 2
-text = "Slot empty"
+text = "Слот пуст"
 
 [node name="InventoryColumns" type="HBoxContainer" parent="InventoryOverlay/InventoryPanel/InventoryMargin/InventoryContent"]
 layout_mode = 2
@@ -436,7 +435,7 @@ theme_override_colors/font_color = Color(0.92, 0.9, 0.83, 1)
 theme_override_font_sizes/font_size = 16
 autowrap_mode = 2
 vertical_alignment = 0
-text = "STACKABLES\nNone"
+text = "РАСХОДНИКИ\nПусто"
 
 [node name="InventoryStatsColumns" type="HBoxContainer" parent="InventoryOverlay/InventoryPanel/InventoryMargin/InventoryContent/InventoryColumns"]
 layout_mode = 2
@@ -453,7 +452,7 @@ theme_override_colors/font_color = Color(0.82, 0.89, 0.98, 1)
 theme_override_font_sizes/font_size = 16
 autowrap_mode = 2
 vertical_alignment = 0
-text = "OFFENSE"
+text = "АТАКА"
 
 [node name="InventoryStatsRight" type="Label" parent="InventoryOverlay/InventoryPanel/InventoryMargin/InventoryContent/InventoryColumns/InventoryStatsColumns"]
 custom_minimum_size = Vector2(185, 0)
@@ -464,12 +463,12 @@ theme_override_colors/font_color = Color(0.9, 0.96, 0.86, 1)
 theme_override_font_sizes/font_size = 16
 autowrap_mode = 2
 vertical_alignment = 0
-text = "SURVIVAL"
+text = "ЖИВУЧЕСТЬ"
 
 [node name="InventoryPassivesTitle" type="Label" parent="InventoryOverlay/InventoryPanel/InventoryMargin/InventoryContent"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
-text = "COLLECTED PASSIVES"
+text = "СОБРАННЫЕ ПАССИВКИ"
 
 [node name="InventoryPassivesScroll" type="ScrollContainer" parent="InventoryOverlay/InventoryPanel/InventoryMargin/InventoryContent"]
 custom_minimum_size = Vector2(0, 230)
@@ -488,7 +487,7 @@ columns = 4
 
 [node name="MusicValueLabel" type="Label" parent="PauseOverlay/PausePanel/PauseContent"]
 layout_mode = 2
-text = "Music: 50%"
+text = "Музыка: 50%"
 horizontal_alignment = 1
 
 [node name="MusicSlider" type="HSlider" parent="PauseOverlay/PausePanel/PauseContent"]
@@ -500,7 +499,7 @@ size_flags_horizontal = 3
 
 [node name="SfxValueLabel" type="Label" parent="PauseOverlay/PausePanel/PauseContent"]
 layout_mode = 2
-text = "SFX: 75%"
+text = "Звуки: 75%"
 horizontal_alignment = 1
 
 [node name="SfxSlider" type="HSlider" parent="PauseOverlay/PausePanel/PauseContent"]
@@ -517,11 +516,11 @@ theme_override_constants/separation = 10
 
 [node name="ResumeButton" type="Button" parent="PauseOverlay/PausePanel/PauseContent/Buttons"]
 layout_mode = 2
-text = "Continue"
+text = "Продолжить"
 
 [node name="RestartButton" type="Button" parent="PauseOverlay/PausePanel/PauseContent/Buttons"]
 layout_mode = 2
-text = "Restart"
+text = "Рестарт"
 
 [connection signal="value_changed" from="PauseOverlay/PausePanel/PauseContent/MusicSlider" to="." method="_on_music_slider_value_changed"]
 [connection signal="value_changed" from="PauseOverlay/PausePanel/PauseContent/SfxSlider" to="." method="_on_sfx_slider_value_changed"]
