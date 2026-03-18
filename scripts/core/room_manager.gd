@@ -471,6 +471,8 @@ func _on_room_cleared(pos: Vector2i) -> void:
 	_assign_room_reward(pos)
 	if current_pos == pos and current_room_instance != null and current_room_instance.has_method("apply_room_data"):
 		current_room_instance.apply_room_data(map[pos])
+		if current_room_instance.has_method("refresh_room_runtime"):
+			current_room_instance.refresh_room_runtime()
 	notify_room_state_changed(pos)
 
 

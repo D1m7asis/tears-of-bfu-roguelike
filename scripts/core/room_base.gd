@@ -128,6 +128,16 @@ func apply_room_state(state: Dictionary) -> void:
 	_notify_room_state_changed()
 
 
+func refresh_room_runtime() -> void:
+	if _room_kind == "boss" and _room_cleared_state:
+		_boss_defeated = true
+	_configure_reward_objects()
+	set_enemies_active(false)
+	_set_doors_combat_locked(_should_lock_doors())
+	_sync_room_pickup_markers()
+	_notify_room_state_changed()
+
+
 func export_room_state() -> Dictionary:
 	return {
 		"decor_scene_path": _decor_scene_path,
