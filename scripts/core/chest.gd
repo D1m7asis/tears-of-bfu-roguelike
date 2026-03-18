@@ -79,6 +79,19 @@ func get_interaction_hint() -> String:
 	return "Сундук\nНужен 1 ключ"
 
 
+func set_opened(opened: bool) -> void:
+	_is_open = opened
+	_apply_visual_state()
+	if collision_shape != null:
+		collision_shape.set_deferred("disabled", opened)
+	set_deferred("monitoring", not opened)
+	set_deferred("monitorable", not opened)
+
+
+func is_opened() -> bool:
+	return _is_open
+
+
 func _apply_visual_state() -> void:
 	if sprite == null:
 		return

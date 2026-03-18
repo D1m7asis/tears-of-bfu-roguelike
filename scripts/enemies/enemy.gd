@@ -401,6 +401,64 @@ func apply_mutation(mutation_id: String) -> void:
 	if health_bar != null and health_bar.has_method("show_health"):
 		health_bar.show_health(health, max_health)
 
+
+func export_runtime_state() -> Dictionary:
+	return {
+		"position": position,
+		"health": health,
+		"max_health": max_health,
+		"damage": damage,
+		"speed": speed,
+		"attack_cooldown": attack_cooldown,
+		"attack_style": attack_style,
+		"projectile_cooldown": projectile_cooldown,
+		"projectile_speed": projectile_speed,
+		"projectile_range": projectile_range,
+		"preferred_distance": preferred_distance,
+		"leap_cooldown": leap_cooldown,
+		"leap_speed": leap_speed,
+		"leap_duration": leap_duration,
+		"leap_trigger_range": leap_trigger_range,
+		"boss_phase_2_threshold": boss_phase_2_threshold,
+		"boss_phase_3_threshold": boss_phase_3_threshold,
+		"boss_burst_cooldown": boss_burst_cooldown,
+		"boss_burst_projectiles": boss_burst_projectiles,
+		"can_drop_special_items": can_drop_special_items,
+		"is_boss": is_boss,
+		"scale": scale,
+		"mutation_id": _mutation_id,
+	}
+
+
+func apply_runtime_state(state: Dictionary) -> void:
+	position = state.get("position", position)
+	health = int(state.get("health", health))
+	max_health = int(state.get("max_health", max_health))
+	damage = int(state.get("damage", damage))
+	speed = float(state.get("speed", speed))
+	attack_cooldown = float(state.get("attack_cooldown", attack_cooldown))
+	attack_style = str(state.get("attack_style", attack_style))
+	projectile_cooldown = float(state.get("projectile_cooldown", projectile_cooldown))
+	projectile_speed = float(state.get("projectile_speed", projectile_speed))
+	projectile_range = float(state.get("projectile_range", projectile_range))
+	preferred_distance = float(state.get("preferred_distance", preferred_distance))
+	leap_cooldown = float(state.get("leap_cooldown", leap_cooldown))
+	leap_speed = float(state.get("leap_speed", leap_speed))
+	leap_duration = float(state.get("leap_duration", leap_duration))
+	leap_trigger_range = float(state.get("leap_trigger_range", leap_trigger_range))
+	boss_phase_2_threshold = float(state.get("boss_phase_2_threshold", boss_phase_2_threshold))
+	boss_phase_3_threshold = float(state.get("boss_phase_3_threshold", boss_phase_3_threshold))
+	boss_burst_cooldown = float(state.get("boss_burst_cooldown", boss_burst_cooldown))
+	boss_burst_projectiles = int(state.get("boss_burst_projectiles", boss_burst_projectiles))
+	can_drop_special_items = bool(state.get("can_drop_special_items", can_drop_special_items))
+	is_boss = bool(state.get("is_boss", is_boss))
+	scale = state.get("scale", scale)
+	_mutation_id = str(state.get("mutation_id", _mutation_id))
+	_update_phase_state()
+	_refresh_alive_modulate()
+	if health_bar != null and health_bar.has_method("show_health"):
+		health_bar.show_health(health, max_health)
+
 func _refresh_alive_modulate() -> void:
 	_alive_modulate = _mutation_tint * _phase_tint
 	_alive_modulate.a = 1.0

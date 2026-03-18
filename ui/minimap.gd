@@ -203,10 +203,18 @@ func _draw_room_icon(_pos: Vector2i, room: Dictionary, rect: Rect2, is_visited: 
 
 func _get_room_pickup_icons(room: Dictionary) -> Array[String]:
 	var result: Array[String] = []
-	var instance: Node = room.get("instance", null) as Node
-	if instance == null or not instance.has_method("get_floor_pickup_markers"):
-		return result
-	return instance.get_floor_pickup_markers()
+	var room_pickups: Array = room.get("pickup_markers", [])
+	for icon_variant in room_pickups:
+		var icon_id := str(icon_variant)
+		if icon_id != "":
+			result.append(icon_id)
+	if str(room.get("reward_type", "none")) == "key" and not bool(room.get("reward_claimed", true)):
+		result.append("key")
+	if str(room.get("reward_type", "active_item")) == "active_item" and bool(room.get("reward_pickup_present", false)):
+		result.append("active_item")
+	if str(room.get("reward_type", "chest")) == "chest" and not bool(room.get("reward_claimed", true)):
+		result.append("chest")
+	return result
 
 func _draw_flag_icon(rect: Rect2) -> void:
 	var plate := rect.grow(-2.0)

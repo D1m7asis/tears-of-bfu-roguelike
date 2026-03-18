@@ -166,6 +166,27 @@ func get_hint_anchor_world_position() -> Vector2:
 	return global_position + Vector2(0.0, -18.0)
 
 
+func export_floor_state() -> Dictionary:
+	return {
+		"item_path": "" if item_data == null else item_data.resource_path,
+		"amount": amount,
+		"global_position": global_position,
+		"pickup_enabled": _pickup_enabled,
+	}
+
+
+func apply_floor_state(state: Dictionary) -> void:
+	var item_path := str(state.get("item_path", ""))
+	if item_path != "":
+		item_data = load(item_path) as ItemData
+	amount = int(state.get("amount", amount))
+	global_position = state.get("global_position", global_position)
+	if item_data != null and sprite != null and item_data.icon != null:
+		sprite.texture = item_data.icon
+	_apply_visual_profile()
+	set_pickup_enabled(bool(state.get("pickup_enabled", true)))
+
+
 func _notify_room_pickup_changed() -> void:
 	var room_owner := _find_room_owner()
 	if room_owner != null and room_owner.has_method("on_room_pickup_changed"):

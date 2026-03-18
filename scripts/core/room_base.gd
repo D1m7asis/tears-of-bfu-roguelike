@@ -64,6 +64,13 @@ var _living_enemy_count: int = 0
 var _dead_enemy_ids: Dictionary = {}
 var _enemy_mutations: Array[String] = ["titan", "swift", "brutal", "sniper", "rabid"]
 var _enemy_preset_spawn_count_cache: Dictionary = {}
+var _room_seed: int = 0
+var _decor_scene_path: String = ""
+var _boss_scene_path: String = ""
+var _enemy_state_snapshot: Array[Dictionary] = []
+var _floor_pickup_snapshots: Array[Dictionary] = []
+var _reward_chest_opened: bool = false
+var _victory_hatch_spawned: bool = false
 
 
 func _ready() -> void:
@@ -87,6 +94,9 @@ func apply_room_data(data: Dictionary) -> void:
 	_reward_claimed = bool(data.get("reward_claimed", false))
 	_reward_item_path = str(data.get("reward_item_path", ""))
 	_reward_pickup_present = bool(data.get("reward_pickup_present", false))
+	_room_seed = int(data.get("room_seed", _room_visual_seed()))
+	if _room_seed == 0:
+		_room_seed = _room_visual_seed()
 
 	var door_exists: Dictionary = data.get("doors_exist", {})
 	var door_open: Dictionary = data.get("doors_open", {})
@@ -96,16 +106,37 @@ func apply_room_data(data: Dictionary) -> void:
 	_apply_one(door_s, bool(door_exists.get(RoomManager.Dir.S, false)), bool(door_open.get(RoomManager.Dir.S, false)))
 	_apply_one(door_w, bool(door_exists.get(RoomManager.Dir.W, false)), bool(door_open.get(RoomManager.Dir.W, false)))
 
+
+func apply_room_state(state: Dictionary) -> void:
+	_decor_scene_path = str(state.get("decor_scene_path", ""))
+	_boss_scene_path = str(state.get("boss_scene_path", ""))
+	_enemy_state_snapshot = _duplicate_dict_array(state.get("enemy_entries", []))
+	_floor_pickup_snapshots = _duplicate_dict_array(state.get("floor_pickups", []))
+	_reward_chest_opened = bool(state.get("reward_chest_opened", false))
+	_victory_hatch_spawned = bool(state.get("victory_hatch_spawned", _room_kind == "boss" and _boss_defeated))
 	_ensure_floor_visuals()
 	_ensure_decor_layout()
 	_ensure_enemy_layout()
 	_ensure_boss_content()
+	_restore_floor_pickups_from_snapshot()
 	_bind_enemy_signals()
 	_rebuild_enemy_tracking()
 	_configure_reward_objects()
 	set_enemies_active(false)
 	_set_doors_combat_locked(_should_lock_doors())
+	_sync_room_pickup_markers()
 	_notify_room_state_changed()
+
+
+func export_room_state() -> Dictionary:
+	return {
+		"decor_scene_path": _decor_scene_path,
+		"boss_scene_path": _boss_scene_path,
+		"enemy_entries": _capture_enemy_state(),
+		"floor_pickups": _capture_floor_pickup_snapshots(),
+		"reward_chest_opened": _reward_chest_opened,
+		"victory_hatch_spawned": _victory_hatch_instance != null or _victory_hatch_spawned,
+	}
 
 
 func start_encounter() -> void:
@@ -131,26 +162,35 @@ func set_enemies_active(active: bool) -> void:
 
 func get_floor_pickup_markers() -> Array[String]:
 	var pickups: Array[String] = []
-	_collect_floor_pickups_recursive(self, pickups)
+	for pickup in _get_dynamic_item_pickups():
+		if pickup != null and pickup.has_method("get_minimap_icon_id"):
+			var icon_id := str(pickup.call("get_minimap_icon_id"))
+			if icon_id != "":
+				pickups.append(icon_id)
 	return pickups
 
 
 func on_room_pickup_changed() -> void:
+	_sync_room_pickup_markers()
 	_notify_room_state_changed()
 
 
 func on_floor_pickup_collected(pickup: Node) -> void:
 	if pickup == reward_key_pickup or pickup == _reward_active_pickup:
 		_mark_reward_claimed()
+	_sync_room_pickup_markers()
 	_notify_room_state_changed()
 
 
 func on_chest_opened(_chest: Node) -> void:
+	_reward_chest_opened = true
+	_sync_room_pickup_markers()
 	_mark_reward_claimed()
 	_notify_room_state_changed()
 
 
 func on_room_unloaded() -> void:
+	_sync_room_pickup_markers()
 	if _reward_active_pickup != null and is_instance_valid(_reward_active_pickup):
 		_reward_active_pickup.queue_free()
 	_reward_active_pickup = null
@@ -174,7 +214,12 @@ func _ensure_decor_layout() -> void:
 		return
 
 	_decor_layout_generated = true
-	var preset_scene := _pick_random_scene(_decor_folder_for_room())
+	_rng.seed = int(_room_seed) ^ 0x2D4F
+	var preset_scene := _load_scene_from_path(_decor_scene_path)
+	if preset_scene == null:
+		preset_scene = _pick_random_scene(_decor_folder_for_room())
+		if preset_scene != null:
+			_decor_scene_path = preset_scene.resource_path
 	if preset_scene == null:
 		return
 
@@ -209,11 +254,18 @@ func _ensure_decor_root() -> void:
 func _ensure_enemy_layout() -> void:
 	if _enemy_layout_generated or not spawn_enemy_layouts or enemies_root == null:
 		return
+	if _room_kind == "boss":
+		return
 	if _room_cleared_state:
 		return
 
 	_enemy_layout_generated = true
 	_clear_existing_enemies()
+	_rng.seed = int(_room_seed) ^ 0x51A7
+
+	if not _enemy_state_snapshot.is_empty():
+		_restore_enemies_from_snapshot()
+		return
 
 	var preset_scene := _pick_enemy_preset_scene()
 	if preset_scene == null:
@@ -248,11 +300,26 @@ func _ensure_boss_content() -> void:
 	if boss_spawn == null or not (boss_spawn is Node2D):
 		return
 
+	if not _enemy_state_snapshot.is_empty():
+		_restore_enemies_from_snapshot()
+		_boss_spawned = true
+		for child in enemies_root.get_children():
+			if child != null and child.get("is_boss") == true:
+				_boss_instance = child
+				break
+		return
+
+	_rng.seed = int(_room_seed) ^ 0x7B19
 	var boss_scene := _pick_random_scene(boss_variants_folder)
+	if _boss_scene_path != "":
+		var restored_boss_scene := _load_scene_from_path(_boss_scene_path)
+		if restored_boss_scene != null:
+			boss_scene = restored_boss_scene
 	if boss_scene == null:
 		return
 
 	_boss_spawned = true
+	_boss_scene_path = boss_scene.resource_path
 	_boss_instance = boss_scene.instantiate()
 	if _boss_instance is Node2D:
 		(_boss_instance as Node2D).position = (boss_spawn as Node2D).position
@@ -431,7 +498,7 @@ func _ensure_floor_visuals() -> void:
 	if floor_tile_map == null:
 		return
 
-	var room_seed := _room_visual_seed()
+	var room_seed := _room_seed if _room_seed != 0 else _room_visual_seed()
 	_rng.seed = room_seed
 	floor_tile_map.modulate = FLOOR_ROOM_TINTS[_rng.randi_range(0, FLOOR_ROOM_TINTS.size() - 1)]
 	_build_floor_patch_overlays()
@@ -614,13 +681,16 @@ func _configure_reward_objects() -> void:
 			reward_key_pickup.call("set_pickup_enabled", should_show_key)
 
 	var should_show_chest := false
-	if _room_kind == "normal" and _room_cleared_state and _reward_type == "chest" and not _reward_claimed:
+	if _room_kind == "normal" and _room_cleared_state and _reward_type == "chest" and (not _reward_claimed or _reward_chest_opened):
 		should_show_chest = true
 
 	if should_show_chest:
 		_ensure_reward_chest()
 	else:
 		_remove_reward_chest()
+
+	if _room_kind == "boss" and (_boss_defeated or _victory_hatch_spawned):
+		_spawn_victory_hatch()
 
 	if _room_kind == "boss" and _boss_defeated and not _reward_claimed:
 		_ensure_reward_active_pickup()
@@ -634,11 +704,15 @@ func _ensure_reward_chest() -> void:
 	if _reward_chest_instance != null and is_instance_valid(_reward_chest_instance):
 		if _reward_chest_instance is Node2D:
 			(_reward_chest_instance as Node2D).position = to_local(find_free_drop_position(global_position + _reward_spawn_position(), 96.0))
+		if _reward_chest_instance.has_method("set_opened"):
+			_reward_chest_instance.set_opened(_reward_chest_opened)
 		return
 
 	_reward_chest_instance = CHEST_SCENE.instantiate()
 	if _reward_chest_instance is Node2D:
 		(_reward_chest_instance as Node2D).position = to_local(find_free_drop_position(global_position + _reward_spawn_position(), 96.0))
+	if _reward_chest_instance.has_method("set_opened"):
+		_reward_chest_instance.set_opened(_reward_chest_opened)
 	call_deferred("_add_reward_chest_deferred")
 
 
@@ -680,7 +754,7 @@ func _remove_reward_active_pickup() -> void:
 	if _reward_active_pickup != null and is_instance_valid(_reward_active_pickup):
 		_reward_active_pickup.queue_free()
 	_reward_active_pickup = null
-	_reward_pickup_present = false
+	_reward_pickup_present = false if _reward_claimed else _reward_pickup_present
 
 
 func _reward_spawn_position() -> Vector2:
@@ -748,6 +822,7 @@ func _spawn_victory_hatch() -> void:
 		return
 
 	_victory_hatch_instance = victory_hatch_scene.instantiate()
+	_victory_hatch_spawned = true
 	if _victory_hatch_instance is Node2D:
 		(_victory_hatch_instance as Node2D).position = (hatch_spawn as Node2D).position
 	call_deferred("_add_victory_hatch_deferred")
@@ -765,6 +840,101 @@ func _notify_room_state_changed() -> void:
 	var room_manager := get_tree().get_first_node_in_group("room_manager")
 	if room_manager != null and room_manager.has_method("notify_room_state_changed"):
 		room_manager.notify_room_state_changed(_room_pos)
+
+
+func _sync_room_pickup_markers() -> void:
+	var room_manager := get_tree().get_first_node_in_group("room_manager")
+	if room_manager != null and room_manager.has_method("set_room_pickup_markers"):
+		room_manager.set_room_pickup_markers(_room_pos, get_floor_pickup_markers())
+
+
+func _capture_enemy_state() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if enemies_root == null:
+		return result
+	for child in enemies_root.get_children():
+		if child == null or child.get("is_dead") == true:
+			continue
+		if not child.has_method("export_runtime_state"):
+			continue
+		result.append({
+			"scene_path": child.scene_file_path,
+			"state": child.export_runtime_state(),
+		})
+	return result
+
+
+func _restore_enemies_from_snapshot() -> void:
+	if enemies_root == null:
+		return
+	for entry_variant in _enemy_state_snapshot:
+		var entry: Dictionary = entry_variant
+		var scene := _load_scene_from_path(str(entry.get("scene_path", "")))
+		if scene == null:
+			continue
+		var enemy_instance := scene.instantiate()
+		if enemy_instance == null:
+			continue
+		if enemy_instance.has_method("apply_runtime_state"):
+			enemy_instance.apply_runtime_state(entry.get("state", {}))
+		enemies_root.add_child(enemy_instance)
+		if enemy_instance.get("is_boss") == true:
+			_boss_instance = enemy_instance
+
+
+func _capture_floor_pickup_snapshots() -> Array[Dictionary]:
+	var snapshots: Array[Dictionary] = []
+	for pickup in _get_dynamic_item_pickups():
+		if pickup.has_method("export_floor_state"):
+			snapshots.append(pickup.export_floor_state())
+	return snapshots
+
+
+func _restore_floor_pickups_from_snapshot() -> void:
+	_clear_dynamic_floor_pickups()
+	for pickup_state_variant in _floor_pickup_snapshots:
+		var pickup_state: Dictionary = pickup_state_variant
+		var pickup := ITEM_PICKUP_SCENE.instantiate()
+		if pickup == null:
+			continue
+		add_child(pickup)
+		if pickup.has_method("apply_floor_state"):
+			pickup.apply_floor_state(pickup_state)
+
+
+func _clear_dynamic_floor_pickups() -> void:
+	for pickup in _get_dynamic_item_pickups():
+		pickup.queue_free()
+
+
+func _get_dynamic_item_pickups() -> Array:
+	var pickups: Array = []
+	_collect_dynamic_item_pickups_recursive(self, pickups)
+	return pickups
+
+
+func _collect_dynamic_item_pickups_recursive(node: Node, pickups: Array) -> void:
+	for child in node.get_children():
+		if child == reward_key_pickup or child == _reward_active_pickup or child == _reward_chest_instance or child == _victory_hatch_instance:
+			continue
+		if child != null and child.is_in_group("floor_pickup") and child.has_method("export_floor_state"):
+			pickups.append(child)
+			continue
+		_collect_dynamic_item_pickups_recursive(child, pickups)
+
+
+func _load_scene_from_path(scene_path: String) -> PackedScene:
+	if scene_path == "":
+		return null
+	return load(scene_path) as PackedScene
+
+
+func _duplicate_dict_array(source: Array) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for entry_variant in source:
+		var entry: Dictionary = entry_variant
+		result.append(entry.duplicate(true))
+	return result
 
 
 func _collect_floor_pickups_recursive(node: Node, pickups: Array[String]) -> void:

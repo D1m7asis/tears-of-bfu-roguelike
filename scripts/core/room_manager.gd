@@ -116,7 +116,6 @@ func _create_room(pos: Vector2i) -> void:
 		"doors_exist": {Dir.N: false, Dir.E: false, Dir.S: false, Dir.W: false},
 		"doors_open": {Dir.N: false, Dir.E: false, Dir.S: false, Dir.W: false},
 		"template": room_template,
-		"instance": null,
 		"visited": false,
 		"cleared": pos == Vector2i.ZERO,
 		"room_kind": "start" if pos == Vector2i.ZERO else "normal",
@@ -126,6 +125,9 @@ func _create_room(pos: Vector2i) -> void:
 		"reward_claimed": pos == Vector2i.ZERO,
 		"reward_item_path": "",
 		"reward_pickup_present": false,
+		"pickup_markers": [],
+		"room_seed": _compute_room_seed(pos),
+		"room_state": {},
 	}
 
 
@@ -162,26 +164,25 @@ func load_room(pos: Vector2i, entered_from: int) -> void:
 	emit_signal("room_loaded", pos)
 
 	if previous_room_instance != null:
+		if map.has(previous_pos) and previous_room_instance.has_method("export_room_state"):
+			map[previous_pos]["room_state"] = previous_room_instance.export_room_state()
 		if previous_room_instance.has_method("on_room_unloaded"):
 			previous_room_instance.on_room_unloaded()
 		if previous_room_instance.get_parent() == room_root:
 			room_root.remove_child(previous_room_instance)
+		previous_room_instance.queue_free()
 	current_room_instance = null
 
-	var room_instance: Node = room_data.get("instance", null)
-	if room_instance == null:
-		var room_template: PackedScene = room_data["template"]
-		if room_template == null:
-			push_error("Room template is null. Assign room_templates.")
-			return
+	var room_template: PackedScene = room_data["template"]
+	if room_template == null:
+		push_error("Room template is null. Assign room_templates.")
+		return
 
-		room_instance = room_template.instantiate()
-		room_data["instance"] = room_instance
-		map[pos] = room_data
-		if room_instance.has_signal("room_cleared"):
-			var on_room_cleared := Callable(self, "_on_room_cleared")
-			if not room_instance.is_connected("room_cleared", on_room_cleared):
-				room_instance.connect("room_cleared", on_room_cleared)
+	var room_instance: Node = room_template.instantiate()
+	if room_instance.has_signal("room_cleared"):
+		var on_room_cleared := Callable(self, "_on_room_cleared")
+		if not room_instance.is_connected("room_cleared", on_room_cleared):
+			room_instance.connect("room_cleared", on_room_cleared)
 
 	current_room_instance = room_instance
 	if current_room_instance.get_parent() != room_root:
@@ -191,6 +192,8 @@ func load_room(pos: Vector2i, entered_from: int) -> void:
 
 	if current_room_instance.has_method("apply_room_data"):
 		current_room_instance.apply_room_data(map[pos])
+	if current_room_instance.has_method("apply_room_state"):
+		current_room_instance.apply_room_state(room_data.get("room_state", {}))
 
 	_spawn_player_at_entry(entered_from)
 
@@ -251,6 +254,16 @@ func set_room_reward_pickup_present(pos: Vector2i, present: bool) -> void:
 	if bool(map[pos].get("reward_pickup_present", false)) == present:
 		return
 	map[pos]["reward_pickup_present"] = present
+	notify_room_state_changed(pos)
+
+
+func set_room_pickup_markers(pos: Vector2i, markers: Array[String]) -> void:
+	if not map.has(pos):
+		return
+	var next_markers := markers.duplicate()
+	if map[pos].get("pickup_markers", []) == next_markers:
+		return
+	map[pos]["pickup_markers"] = next_markers
 	notify_room_state_changed(pos)
 
 
@@ -505,15 +518,28 @@ func _roll_chest_batch() -> void:
 
 
 func _dispose_cached_room_instances() -> void:
-	for room_data_variant in map.values():
-		var room_data: Dictionary = room_data_variant
-		var room_instance: Node = room_data.get("instance", null)
-		if room_instance == null:
-			continue
-		if room_instance.get_parent() != null:
-			room_instance.get_parent().remove_child(room_instance)
-		room_instance.queue_free()
+	if current_room_instance == null:
+		return
+	if current_room_instance.get_parent() != null:
+		current_room_instance.get_parent().remove_child(current_room_instance)
+	current_room_instance.queue_free()
+	current_room_instance = null
 
 
 func notify_room_state_changed(pos: Vector2i) -> void:
 	emit_signal("room_state_changed", pos)
+
+
+func _compute_room_seed(pos: Vector2i) -> int:
+	return abs(int(pos.x) * 92837111 ^ int(pos.y) * 689287499 ^ int(max(1, RunStateLib.floor_index)) * 1234567)
+
+
+func _exit_tree() -> void:
+	if current_room_instance == null:
+		return
+	if map.has(current_pos) and current_room_instance.has_method("export_room_state"):
+		map[current_pos]["room_state"] = current_room_instance.export_room_state()
+	if current_room_instance.get_parent() != null:
+		current_room_instance.get_parent().remove_child(current_room_instance)
+	current_room_instance.queue_free()
+	current_room_instance = null
